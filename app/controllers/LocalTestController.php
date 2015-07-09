@@ -2,6 +2,7 @@
 
 use Ser\Redpacket\RedpacketService;
 use Lib\Fun\Fun;
+use Redpacket\RedpacketCode;
 class LocalTestController extends \BaseController
 {
 	/**
@@ -34,7 +35,8 @@ class LocalTestController extends \BaseController
 	 * @return multitype:boolean
 	 */
 	public function filterParams($codes){
-		$params = array();  
+		$params = array(); 
+		if(!is_array($codes) ) return false;
 		array_walk($codes, function($v,$k) use (&$params) {
 			//Input::get ( 'uid' );
 			$r = preg_match('/Input::get\s*\(\s*\'([\w\d_]*)\'\s*\);/', $v,$matchs);
@@ -61,14 +63,106 @@ class LocalTestController extends \BaseController
 	 * @return Ambigous <boolean, multitype:Ambigous >
 	 */
 	public function getFilterCode($filter){
-		$app = app();
-		$filterClosure = $app['events']->getListeners('router.filter: '.$filter);
-		$code = getFunctionDeclaration($filterClosure[0]);
-		return $code;
+// 		$app = app();
+// 		$filterClosure = $app['events']->getListeners('router.filter: '.$filter);
+// 		$code = getFunctionDeclaration($filterClosure[0]);
+		$filters = array(
+			'redpacket_switch' => 'Redpacket\RedpacketController@get_redpacket_status',
+			'uid_token' => 'Redpacket\RedpacketController@verifyUserToken'
+		);
+		if(!isset($filters[$filter])) return false;
+		$action = $this->compileAction($filters[$filter]);
+		$codes = getFunctionDeclaration($action);
+		return $codes;
+	}
+	
+	public function generate_10w(){
+		$num 	= 100000;
+		$codes = [];
+		for($i = 0 ; $i < $num ; $i ++){
+			$codes[randStr(5)] = true;
+		}
+		 
+		while($num - 1 > $count = count($codes)){
+			$rest =  $num - $count;
+			for($i = 0 ; $i < $rest ; $i ++){
+				$codes[randStr(5)] = true;
+			}
+		}
+		
+		$now = date('Y-m-d H:i:s',time()) ;
+		 
+		$file = fopen('sql10w.sql','w') or die('Faild To Open File');
+		 
+		foreach ($codes as $k=> $v){
+		
+			$sql = createInsertSql('gzb_user_redpacket_code', ['my_code'=>$k,'created_at'=>$now]);
+			fwrite($file, $sql.';'.PHP_EOL);
+		}
+		fclose($file);
+		exit;
+	}
+	
+	public function generate_100w(){
+		set_time_limit(1000);
+		$limit 	= 900000;
+		$codes = [];
+		for($i = 0 ; $i < $limit ; $i ++){
+			while ('0100000' >($num = randStr(6)) );
+			$codes[$num] = true;
+		}
+			
+		while($limit > ($count = count($codes) ) ){
+			$rest =  $limit - $count;
+			for($i = 0 ; $i < $rest ; $i ++){
+				while ('0100000' >($num = randStr(6)) );
+				$codes[$num] = true;
+			}
+		}
+		$now = date('Y-m-d H:i:s',time()) ;
+			
+		$file = fopen('sql100w.sql','w') or die('Faild To Open File');
+			
+		foreach ($codes as $k=> $v){
+	
+			$sql = createInsertSql('gzb_user_redpacket_code', ['my_code'=>$k,'created_at'=>$now]);
+			//line($sql.';');
+			fwrite($file, $sql.';'.PHP_EOL);
+		}
+		fclose($file);
+		echo count($codes);
+		exit;
 	}
 	
 	
+	public function getCode(){
+		$phone = Input::get('phone');
+		$redis = LRedis::connection ();
+		$userInfo = array ();
+		$userInfo = json_decode ( $redis->get ( $phone ), 1 );
+		Fun::msg(200,'',$userInfo);
+	}
+	
+	protected function createRepBusNo($num = 17)
+	{
+		list($usec, $sec) = explode(" ", microtime());
+	
+		$usec = (int)($usec * 10000);
+	
+		$str = $sec . $usec . mt_rand(100000, 999999);
+	
+		$str = substr($str, 0, $num);
+		return $str;
+	}
+	
+	public function test(){
+		$this->generate_100w();
+	}
+	
     public function index(){
+//     	$filterClosure = app()['events']->getListeners('router.filter: uid_token');
+//     	$code = getFunctionDeclaration($filterClosure[0],true);
+//     	edump($code);
 //     	dump(( double ) microtime () * 1000000 * getmypid ());
 //     	edump(( double ) microtime () * 1000000 * getmypid ());
 //     	$code = (new RedpacketService())->get_new_exchange_code();
@@ -76,29 +170,8 @@ class LocalTestController extends \BaseController
 //     	dump($code);
 //     	exit;
     	
-//     	$codes = [];
-//     	for($i = 0 ; $i < 1000 ; $i ++){
-//     		$codes[Fun::randStr(5)] = true;
-//     	}
-    	
-//     	foreach ($codes as $k=> $v){
-    		
-//     		$sql = createInsertSql('gzb_user_redpacket_code', ['my_code'=>$k]);
-//     		line($sql.';');
-//     	}
-//     	exit;
-
-    	
     	//edump($codes);
     	//(new RedpacketService())->get_new_exchange_code();
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
     	
     	$routes = Route::getRoutes();
     	$routes_select = array();
@@ -112,7 +185,6 @@ class LocalTestController extends \BaseController
     		$filter  = $v->beforeFilters();
     		//分割action
     		$action  = $this->compileAction($action);
-    		
     		in_array('GET',$methods)  and $method[] = 'GET';
     		in_array('POST',$methods) and $method[] = 'POST';
     		//生成method和uri

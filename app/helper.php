@@ -13,6 +13,30 @@
 
 
 
+function randStr($len = 6, $format = 'NUMBER') {
+	switch ($format) {
+		case 'ALL' :
+			$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-@#~';
+			break;
+		case 'CHAR' :
+			$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-@#~';
+			break;
+		case 'NUMBER' :
+			$chars = '0123456789';
+			break;
+		default :
+			$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+			break;
+	}
+	// 		mt_srand ( ( double ) microtime () * 1000000 * getmypid () );
+	$password = "";
+	while ( strlen ( $password ) < $len )
+		$password .= substr ( $chars, (mt_rand () % strlen ( $chars )), 1 );
+	return $password;
+}
+
+
+
 if (! function_exists ( 'dump' )) {
 	
 	/**
@@ -156,7 +180,7 @@ if (! function_exists ( 'object_name' )) {
 		}
 		$fileList = array ();
 		for($i = $start; $max = $start + $offset, $i < $max; $i ++) {
-			$fileList [] = $rows [$i];
+			$fileList [] = substr($rows [$i], 0,-2) ;
 		}
 		return $fileList;
 	}
@@ -166,7 +190,7 @@ if (! function_exists ( 'object_name' )) {
 	 * @param unknown $name
 	 * @return boolean|multitype:Ambigous
 	 */
-	function getFunctionDeclaration($name) {
+	function getFunctionDeclaration($name,$show = false) {
 		if (is_array ( $name )) {
 			if (method_exists ( $name [0], $name [1] )) {
 				$reflect = new ReflectionMethod ( $name [0], $name [1] );
@@ -186,6 +210,9 @@ if (! function_exists ( 'object_name' )) {
 		$start = $reflect->getStartLine ();
 		$end = $reflect->getEndLine ();
 		$file = $reflect->getFileName ();
+		if($show){
+			dump($file.":$start - $end");
+		}
 		$res = getRows ( $file, $start - 1, $end - $start + 1 );
 		return $res;
 	}

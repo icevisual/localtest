@@ -32,14 +32,11 @@
 	</div>
 	<div class="demo-col" style="width: 500px">
 
-
-
 		<div class="btn-group select select-block mbl">
 			<button class="btn dropdown-toggle clearfix btn-hg btn-primary"
 				data-toggle="dropdown">
 				<span class="filter-option pull-left action_uri">ACTION URI</span>&nbsp;<span
-					class="caret"></span>
-				<input type="hidden" value="" id="action_uri" />
+					class="caret"></span> <input type="hidden" value="" id="action_uri" />
 			</button>
 			<i class="dropdown-arrow dropdown-arrow-inverse"></i>
 			<ul class="dropdown-menu dropdown-inverse" role="menu"
@@ -130,8 +127,11 @@
 				class="form-control input-sm">
 		</div>
 	</div>
-
+	
 	<div class="demo-col">
+		<span class="label label-info">Buttons</span>
+		
+	
 		<a href="#fakelink" id="get_sub"
 			class="btn btn-lg btn-block btn-primary">GET SUBMIT</a> <a
 			href="#fakelink" id="post_sub"
@@ -139,6 +139,43 @@
 			href="#fakelink" id="reset" class="btn btn-lg btn-block btn-warning">RESET</a>
 		<a href="#fakelink" id="add" class="btn btn-lg btn-block btn-default">ADD
 			PARAM</a>
+		<br/>
+			<div class="demo-inline demo-labels">
+				<span class="label label-info">Base Url</span>
+          </div>
+		<div class="btn-group select select-block mbl">
+			<button class="btn dropdown-toggle clearfix btn-info"
+				data-toggle="dropdown">
+				<span class="filter-option pull-left" id="baseuri-name" >Localhost</span>&nbsp;<span
+					class="caret"></span>
+				<input type="hidden" id="baseuri-hidden" value="http://localhost:86"/>
+			</button>
+			<i class="dropdown-arrow"></i>
+			<ul class="dropdown-menu" role="menu"
+				style="overflow-y: auto; min-height: 108px;">
+				<li rel="0" class="selected">
+					<a tabindex="-1" href="#" data-base='http://localhost:86' class="opt baseuri">
+						<span class="pull-left">Localhost</span>
+					</a>
+				</li>
+				<li rel="1" class="selected">
+					<a tabindex="-1" href="#" data-base='http://api.gzb.renrenfenqi.com' class="opt baseuri">
+						<span class="pull-left">Test API</span>
+					</a>
+				</li>
+			</ul>
+			<script>
+			$(function(){
+				$('.baseuri').click(function(){
+					var text 			= $(this).find('span').html();
+					var base 			= $(this).data('base');
+					$('#baseuri-name').html(text);
+					$('#baseuri-hidden').val(base);
+				});
+			})
+			</script>
+		</div>
+
 	</div>
 
 	<script>
@@ -149,13 +186,14 @@
 			var param = '';
 			params.each(function(i,v){
 				var vv = $.trim($(v).val());
-				if(vv) param += '&' + $(v).val();
+				vv.replace(/\s/g, "");
+				if(vv) param += '&' + vv;
 			});
-
+			var base = $('#baseuri-hidden').val();
 			if(param) param = param.substring(1);
 			$.ajax({
 	             type: type,
-	             url: url,
+	             url: base + url,
 	             data: param,
 	             dataType: "text",
 	             success: function(data){
