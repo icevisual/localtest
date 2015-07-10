@@ -109,6 +109,10 @@ if (! function_exists ( 'edump' )) {
 		
 	}
 	
+	function edumpLastSql() {
+		edump(lastSql());
+	}
+	
 }
 
 

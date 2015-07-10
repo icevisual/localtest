@@ -175,10 +175,20 @@
 			})
 			</script>
 		</div>
-
 	</div>
-
 	<script>
+
+	var decomposeVariables = function(variable){
+		
+		
+
+
+	}
+	var isJson = function(obj){
+	    var isjson = typeof(obj) == "object" && Object.prototype.toString.call(obj).toLowerCase() == "[object object]" && !obj.length;
+	    return isjson;
+	}
+	
 	$(function(){
 		var execSubmit = function (type){
 			var url = $('#action_uri').val();
@@ -192,14 +202,17 @@
 			var base = $('#baseuri-hidden').val();
 			if(param) param = param.substring(1);
 			$.ajax({
-	             type: type,
-	             url: base + url,
-	             data: param,
-	             dataType: "text",
-	             success: function(data){
-		             console.log(data);
-		             $('#res').html(hexToDec(data));
-	             },
+	            type: type,
+	            url: base + url,
+	            data: param,
+	            dataType: "text",
+	            success: function(data){
+// 	            	var obj =  JSON.parse(data);; 
+// 		            console.log(data);
+// 		            console.log(obj);
+// 		            console.log(isJson(data));
+		            $('#res').html(hexToDec(data));
+	            },
             	error:function(){
 					alert('ERROR');
                 }

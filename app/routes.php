@@ -15,7 +15,7 @@ Route::options ( '{all}', function () {
 if( class_exists('LocaltestController')){
 	include __DIR__.'/helper.php';
 	Route::get('localtest',   'LocalTestController@index');
-	Route::get('test',   'LocalTest1Controller@run');
+	Route::get('test',   'LocalTestController@test');
 	Route::post ( 'get_create_code', 'LocalTestController@getCode' ); // 注册--获取验证码
 }
 
@@ -32,6 +32,9 @@ Route::group ( array (
 	//获取支持的银行列表。。
 	Route::get ( '/get_support_bank'		, 'Redpacket\RedpacketController@get_support_bank' );
 	
+	//获取红包金额
+	Route::get ( '/get_redpacket_amount'	, 'Redpacket\RedpacketController@get_redpacket_amount' );
+	
 	// 带邀请码的注册
 	Route::post( '/register'				, 'Redpacket\RedpacketController@register' );
 	
@@ -45,7 +48,6 @@ Route::group ( array (
 	// 检测是否开启
 	Route::post ( '/get_redpacket_info', array (
 			'before' => array (
-					'redpacket_switch',
 					'uid_token' 
 			),
 			'uses' => 'Redpacket\RedpacketController@get_redpacket_info' 
@@ -76,11 +78,15 @@ Route::group ( array (
 	// 检测是否开启
 	Route::post ( '/withdraw', array (
 			'before' => array (
-					'redpacket_switch',
 					'uid_token' 
 			),
 			'uses' => 'Redpacket\RedpacketController@withdraw' 
 	) );
+	
+	//直连支付回调处理
+	Route::any('/tranDirectReq_Notify','Redpacket\RedpacketController@tranDirectReq_Notify');
+	
+	
 } );
 
 Route::group(array('before' => 'crm_auth','prefix'=>'crm'), function () {
@@ -170,5 +176,21 @@ Route::group ( array ('prefix' => 'eagleeye'), function () {
     	
         Route::get ( '/all', 'Eagleeye\User\InfoController@all' );
     });
+    
+    Route::group ( array ('prefix' => 'fraudmetrix'), function () {
+    		 
+    	Route::post ( '/getuserfin', 'Eagleeye\Fraudmetrix\FraudmetrixController@getuserfin' );
+    });
 
 });
+
+
+//地理位置
+Route::group ( array ('prefix' => 'location'), function () {
+
+	Route::post ('/Reported', 'Location\ReportedController@getData');
+
+});
+	
+	
+	
