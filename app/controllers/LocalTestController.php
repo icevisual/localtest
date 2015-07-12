@@ -227,20 +227,54 @@ EOF;
 	}
 	
 	
+	public function storeIds($file,$data){
+		$content =<<<EOF
+<?php
+		
+	return [
+		$data
+];
+		
+EOF;
+		file_put_contents($file, $content);
+		
+	}
+	
+	public function getAllValidOldUid(){
+		$created_at = '2015-07-10 00:00:00';
+		$jiang_zhe_hu_ids = '26,27,28,29,30,31,32,3234,3235,3236,3237,3238,3239,33,34,37,39,41,43,47,3240,3241,3242,3243,48,49,50,51,52,53,54,3244,3245,3246,3247,55,56,57,58,59,60,3248,61,62,63,64,3249,65,66,67,68,3250,3251,69,70,71,72,3252,3253,3254,3255,3256,73,74,75,76,77,78,84,85,86,87,91,92,93,94,95,96,97,98,3257,99,100,101,102,103,104,105,106,3258,1772,1773,1774,1775,1776,1777,1778,1779,1780,1781,1782,1783,1784,1786,1787,1788,1789,1790,1791,1792,1793,1795,1796,1797,1798,1799,1800,1801,1802,1803,1804,1805,1807,1808,1809,1810,1811,1812,1813,1815,1816,1817,1818,1819,1820,1821,1822,1823,1824,1825,1827,1828,1829,1830,1831,1832,1833,1834,1836,1837,1838,1839,1840,1841,1842,1844,1845,1846,1847,1848,1849,1850,1851,1853,1854,1855,1856,1857,1858,1859,1860,1861,1863,1864,1865,1866,1867,1868,1869,1871,1872,1873,1874,1875,1876,1878,1879,1880,1881,1882,1883,1885,1886,1887,1888,1889,2741,2742,2743,2744,2745,2746,2747,2748,2749,2750,2751,2752,2753,2754,2755,2756,2757,2758,2759';
+		$sql = 'SELECT a.uid
+			FROM gzb_user_account a
+			INNER JOIN gzb_order_main m on a.uid = m.uid
+			INNER JOIN gzb_user_address addr on addr.uid= a.uid
+			WHERE a.created_at <\''.$created_at.'\'
+			AND addr.type= 1
+			AND addr.area_id in ('.$jiang_zhe_hu_ids.')
+			GROUP BY a.uid';
+		$result = DB::select($sql);
+		$uids = [];
+		foreach($result as $v){
+			$uids[$v->uid] = true;
+		}
+		//3290/30451
+		edump(count($uids));
+	}
+	
+	
 	public function validOldUser($uid){
 		$created_at = '2015-07-10 00:00:00';
 		$jiang_zhe_hu_ids = '26,27,28,29,30,31,32,3234,3235,3236,3237,3238,3239,33,34,37,39,41,43,47,3240,3241,3242,3243,48,49,50,51,52,53,54,3244,3245,3246,3247,55,56,57,58,59,60,3248,61,62,63,64,3249,65,66,67,68,3250,3251,69,70,71,72,3252,3253,3254,3255,3256,73,74,75,76,77,78,84,85,86,87,91,92,93,94,95,96,97,98,3257,99,100,101,102,103,104,105,106,3258,1772,1773,1774,1775,1776,1777,1778,1779,1780,1781,1782,1783,1784,1786,1787,1788,1789,1790,1791,1792,1793,1795,1796,1797,1798,1799,1800,1801,1802,1803,1804,1805,1807,1808,1809,1810,1811,1812,1813,1815,1816,1817,1818,1819,1820,1821,1822,1823,1824,1825,1827,1828,1829,1830,1831,1832,1833,1834,1836,1837,1838,1839,1840,1841,1842,1844,1845,1846,1847,1848,1849,1850,1851,1853,1854,1855,1856,1857,1858,1859,1860,1861,1863,1864,1865,1866,1867,1868,1869,1871,1872,1873,1874,1875,1876,1878,1879,1880,1881,1882,1883,1885,1886,1887,1888,1889,2741,2742,2743,2744,2745,2746,2747,2748,2749,2750,2751,2752,2753,2754,2755,2756,2757,2758,2759';
 		$account = Account::where('uid',$uid)->first();
 		if($account && $account->created_at < $created_at){
-			$sql = 'SELECT a.uid,a.phone,m.orderid,addr.*
+			$sql = "SELECT a.uid,a.phone,m.orderid,addr.*
 				FROM gzb_user_account a
 				INNER JOIN gzb_order_main m on a.uid = m.uid
 				INNER JOIN gzb_user_address addr on addr.uid= a.uid
-				WHERE a.created_at < '.$created_at.'
+				WHERE a.created_at < '{$created_at}'
 				AND addr.type= 1
-				AND addr.area_id in ('.$jiang_zhe_hu_ids.')
+				AND addr.area_id in ({$jiang_zhe_hu_ids})
 				AND a.uid = ?
-				GROUP BY a.uid';
+				GROUP BY a.uid";
 			$result = DB::select($sql,array('uid'=>$uid));
 			if($result){
 				return true;
@@ -250,37 +284,205 @@ EOF;
 		return true;
 	}
 	
-	public function test(){
-		
-		
-		
-		//static ::outer_province(111);
-		
-		$jian_zhe_hu_ids = include ('jiang_zhe_hu_ids.php');
-		edump(count($jian_zhe_hu_ids));
-		DB::delete('delete from gzb_user_cheat;');
-		//
-		$sql = 'SELECT a.uid as auid,a.phone,i.* FROM gzb_user_account a 
-				LEFT JOIN gzb_order_main m on a.uid = m.uid
-				LEFT JOIN gzb_user_info i on i.uid= a.uid
-				WHERE m.orderid is NULL';
+	public function countUid($sql){
 		$result = DB::select($sql);
+		$uids = [];
+//		dump('Result Count:'.count($result));
+		foreach($result as $v){
+			$uids[] = $v->auid;
+		}
+		//26276/30451
 		
-		foreach ($result as $value){
-			
+		$count = count($uids);
+//		dump('Uids Count:'.$count);
+		$count = count(array_flip($uids));
+		dump('FLIP Count:'.$count);
+		return $count;
+	}
+	
+	public function getAllInvalidOldUid(){
+		$created_at = '2015-07-11 00:00:00';
+		$jiang_zhe_hu_ids = '26,27,28,29,30,31,32,3234,3235,3236,3237,3238,3239,33,34,37,39,41,43,47,3240,3241,3242,3243,48,49,50,51,52,53,54,3244,3245,3246,3247,55,56,57,58,59,60,3248,61,62,63,64,3249,65,66,67,68,3250,3251,69,70,71,72,3252,3253,3254,3255,3256,73,74,75,76,77,78,84,85,86,87,91,92,93,94,95,96,97,98,3257,99,100,101,102,103,104,105,106,3258,1772,1773,1774,1775,1776,1777,1778,1779,1780,1781,1782,1783,1784,1786,1787,1788,1789,1790,1791,1792,1793,1795,1796,1797,1798,1799,1800,1801,1802,1803,1804,1805,1807,1808,1809,1810,1811,1812,1813,1815,1816,1817,1818,1819,1820,1821,1822,1823,1824,1825,1827,1828,1829,1830,1831,1832,1833,1834,1836,1837,1838,1839,1840,1841,1842,1844,1845,1846,1847,1848,1849,1850,1851,1853,1854,1855,1856,1857,1858,1859,1860,1861,1863,1864,1865,1866,1867,1868,1869,1871,1872,1873,1874,1875,1876,1878,1879,1880,1881,1882,1883,1885,1886,1887,1888,1889,2741,2742,2743,2744,2745,2746,2747,2748,2749,2750,2751,2752,2753,2754,2755,2756,2757,2758,2759';
+		
+		$all 		= Account::count();
+		$all_before = Account::where('created_at' ,'<',$created_at)->count();
+		
+
+		$sql = "SELECT a.uid auid,a.phone,m.orderid,addr.*
+			FROM gzb_user_account a
+			LEFT JOIN gzb_order_main m on a.uid = m.uid
+			LEFT JOIN gzb_user_address addr on addr.uid= a.uid
+			LEFT JOIN gzb_user_info
+			WHERE a.created_at <'$created_at'
+			AND ( 
+					(m.uid is null)  
+					or  (
+						addr.uid is not null 
+						and addr.type= 1 
+						and addr.area_id not in ($jiang_zhe_hu_ids) 
+						) 
+					or  (
+						m.uid is not null
+						and addr.uid is null
+					)
+				)
+			GROUP BY a.uid";
+		$this->countUid($sql);
+		
+		$sql = "SELECT a.uid auid,a.phone
+			FROM gzb_user_account a
+			LEFT JOIN gzb_order_main m on a.uid = m.uid
+			WHERE a.created_at <'$created_at'
+			AND ( 
+					m.uid is null
+				)
+			GROUP BY a.uid";
+		$count_no_order =  $this->countUid($sql);
+		//20463
+
+		$sql = "SELECT a.uid auid,a.phone,m.orderid,addr.*
+			FROM gzb_user_account a
+			INNER JOIN gzb_order_main m on a.uid = m.uid
+			INNER JOIN gzb_user_address addr on addr.uid= a.uid
+			WHERE a.created_at <'$created_at'
+			AND ( 
+					addr.type = 1 and
+					addr.area_id not in ($jiang_zhe_hu_ids) 
+						
+				)
+			GROUP BY a.uid";
+		$count_outer = $this->countUid($sql);
+
+		$sql = "SELECT a.uid auid,a.phone,m.orderid,addr.*
+			FROM gzb_user_account a
+			LEFT JOIN gzb_order_main m on a.uid = m.uid
+			LEFT JOIN gzb_user_address addr on addr.uid= a.uid
+			WHERE a.created_at < '$created_at'
+			AND m.uid is not null AND addr.uid is null
+			GROUP BY a.uid";
+		$count_no_addr = $this->countUid($sql);
+
+
+		dump('all:'.$all);
+		dump('all_before:'.$all_before);
+		dump('count_no_order:'.$count_no_order);
+		dump('count_outer:'.$count_outer);
+		dump('count_no_addr:'.$count_no_addr);
+		exit;
+	}
+
+
+
+	public function invalidUidInsertSql(){
+		
+		$created_at = '2015-07-11 00:00:00';
+		$jiang_zhe_hu_ids = '26,27,28,29,30,31,32,3234,3235,3236,3237,3238,3239,33,34,37,39,41,43,47,3240,3241,3242,3243,48,49,50,51,52,53,54,3244,3245,3246,3247,55,56,57,58,59,60,3248,61,62,63,64,3249,65,66,67,68,3250,3251,69,70,71,72,3252,3253,3254,3255,3256,73,74,75,76,77,78,84,85,86,87,91,92,93,94,95,96,97,98,3257,99,100,101,102,103,104,105,106,3258,1772,1773,1774,1775,1776,1777,1778,1779,1780,1781,1782,1783,1784,1786,1787,1788,1789,1790,1791,1792,1793,1795,1796,1797,1798,1799,1800,1801,1802,1803,1804,1805,1807,1808,1809,1810,1811,1812,1813,1815,1816,1817,1818,1819,1820,1821,1822,1823,1824,1825,1827,1828,1829,1830,1831,1832,1833,1834,1836,1837,1838,1839,1840,1841,1842,1844,1845,1846,1847,1848,1849,1850,1851,1853,1854,1855,1856,1857,1858,1859,1860,1861,1863,1864,1865,1866,1867,1868,1869,1871,1872,1873,1874,1875,1876,1878,1879,1880,1881,1882,1883,1885,1886,1887,1888,1889,2741,2742,2743,2744,2745,2746,2747,2748,2749,2750,2751,2752,2753,2754,2755,2756,2757,2758,2759';
+	
+		$sql = "SELECT a.uid auid,a.phone,addr.area_id,addr.address,addr.tel,i.*
+			FROM gzb_user_account a
+			LEFT JOIN gzb_order_main m on a.uid = m.uid
+			LEFT JOIN gzb_user_address addr on addr.uid= a.uid
+			LEFT JOIN gzb_user_info i on i.uid = a.uid
+			WHERE a.created_at <'$created_at'
+			AND ( 
+					(m.uid is null)  
+					or  (
+						addr.uid is not null 
+						and addr.type= 1 
+						and addr.area_id not in ($jiang_zhe_hu_ids) 
+						) 
+					or  (
+						m.uid is not null
+						and addr.uid is null
+					)
+				)
+			GROUP BY a.uid";
+		$result = DB::select($sql);
+		$fp = fopen('cheat.sql','w') or die('Faild To Open File');
+		
+		foreach ($result as $key => $value) {
 			$data = (array)$value;
 			$data['uid'] =$data['auid'];
 			unset($data['auid']);
-			
 			$insertSql = createInsertSql('gzb_user_cheat', $data);
-			DB::select($sql);
-			
-			
+			fwrite($fp, $insertSql.';'.PHP_EOL);
+		}
+
+		fclose($fp);
+		dump(count($result));
+	}
+
+	public function invalidUidInsertSqlDump(){
+		DB::delete('delete from gzb_user_cheat;');
+		$created_at = '2015-07-11 00:00:00';
+		$jiang_zhe_hu_ids = '26,27,28,29,30,31,32,3234,3235,3236,3237,3238,3239,33,34,37,39,41,43,47,3240,3241,3242,3243,48,49,50,51,52,53,54,3244,3245,3246,3247,55,56,57,58,59,60,3248,61,62,63,64,3249,65,66,67,68,3250,3251,69,70,71,72,3252,3253,3254,3255,3256,73,74,75,76,77,78,84,85,86,87,91,92,93,94,95,96,97,98,3257,99,100,101,102,103,104,105,106,3258,1772,1773,1774,1775,1776,1777,1778,1779,1780,1781,1782,1783,1784,1786,1787,1788,1789,1790,1791,1792,1793,1795,1796,1797,1798,1799,1800,1801,1802,1803,1804,1805,1807,1808,1809,1810,1811,1812,1813,1815,1816,1817,1818,1819,1820,1821,1822,1823,1824,1825,1827,1828,1829,1830,1831,1832,1833,1834,1836,1837,1838,1839,1840,1841,1842,1844,1845,1846,1847,1848,1849,1850,1851,1853,1854,1855,1856,1857,1858,1859,1860,1861,1863,1864,1865,1866,1867,1868,1869,1871,1872,1873,1874,1875,1876,1878,1879,1880,1881,1882,1883,1885,1886,1887,1888,1889,2741,2742,2743,2744,2745,2746,2747,2748,2749,2750,2751,2752,2753,2754,2755,2756,2757,2758,2759';
+	
+		$sql = "SELECT a.uid auid,a.phone,addr.area_id,addr.address,addr.tel,i.*
+			FROM gzb_user_account a
+			LEFT JOIN gzb_order_main m on a.uid = m.uid
+			LEFT JOIN gzb_user_address addr on addr.uid= a.uid
+			LEFT JOIN gzb_user_info i on i.uid = a.uid
+			WHERE a.created_at <'$created_at'
+			AND ( 
+					(m.uid is null)  
+					or  (
+						addr.uid is not null 
+						and addr.type= 1 
+						and addr.area_id not in ($jiang_zhe_hu_ids) 
+						) 
+					or  (
+						m.uid is not null
+						and addr.uid is null
+					)
+				)
+			GROUP BY a.uid";
+		$result = DB::select($sql);
+		
+		foreach ($result as $key => $value) {
+			$data = (array)$value;
+			$data['uid'] =$data['auid'];
+			unset($data['auid']);
+			$insertSql = createInsertSql('gzb_user_cheat', $data);
+			DB::insert($insertSql);
+		}
+
+		dump(count($result));
+	}
+
+
+
+	public  function __call($method,$params){
+		$prefix = explode('_', $method);
+		$method = substr($method, 1 + strlen($prefix[0]));
+		
+		if($prefix[0] == 'time' && method_exists($this, $method)){
+			$t = microtime(true);
+			call_user_func_array(array($this,$method),$params);
+			$time =  (microtime(true) - $t);
+			echo '<p>Time:'.$time.'s</p>';
+		}else{
+			throw new \Exception("Error Processing Request", 1);
+		}
+	}
+	
+	public function test(){
+		set_time_limit(9000);
+		$this->time_invalidUidInsertSql();
+		exit;
+
+		$this->invalidUidInsertSql();
+		//edump(29594 - 20463 - 5813 - 28);
+		$this->getAllInvalidOldUid();//26276  R 27161 7864
+		$this->getAllValidOldUid();//3326/30451
+		exit;
+		if(!file_exists('jiang_zhe_hu_ids.php')){
+			static ::outer_province(111);
 		}
 		
 		
-		edump($result);
-		edump($jian_zhe_hu_ids);
+		//DB::delete('delete from gzb_user_cheat;');
+		//DB::query('ALTER TABLE `gzb_user_cheat` AUTO_INCREMENT = 1 ;');
+	
 		
 		
 		//     	$filterClosure = app()['events']->getListeners('router.filter: uid_token');

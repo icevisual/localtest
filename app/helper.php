@@ -11,29 +11,32 @@
  * |
  */
 
+if (! function_exists ( 'randStr' )) {
 
-
-function randStr($len = 6, $format = 'NUMBER') {
-	switch ($format) {
-		case 'ALL' :
-			$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-@#~';
-			break;
-		case 'CHAR' :
-			$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-@#~';
-			break;
-		case 'NUMBER' :
-			$chars = '0123456789';
-			break;
-		default :
-			$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-			break;
+	function randStr($len = 6, $format = 'NUMBER') {
+		switch ($format) {
+			case 'ALL' :
+				$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-@#~';
+				break;
+			case 'CHAR' :
+				$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-@#~';
+				break;
+			case 'NUMBER' :
+				$chars = '0123456789';
+				break;
+			default :
+				$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+				break;
+		}
+		// 		mt_srand ( ( double ) microtime () * 1000000 * getmypid () );
+		$password = "";
+		while ( strlen ( $password ) < $len )
+			$password .= substr ( $chars, (mt_rand () % strlen ( $chars )), 1 );
+		return $password;
 	}
-	// 		mt_srand ( ( double ) microtime () * 1000000 * getmypid () );
-	$password = "";
-	while ( strlen ( $password ) < $len )
-		$password .= substr ( $chars, (mt_rand () % strlen ( $chars )), 1 );
-	return $password;
+}else{
 }
+
 
 
 
@@ -261,6 +264,7 @@ if (! function_exists ( 'createInsertSql' )) {
 	 * @return string
 	 */
 	function createInsertSql($tbname, array $data) {
+		$data  = array_filter($data );
 		$fields = implode ( '`,`', array_keys ( $data ) );
 		$values = implode ( '\',\'', array_values ( $data ) );
 		$sql = 'insert into `' . $tbname . '`(`' . $fields . '`)values(\'' . $values . '\')';
