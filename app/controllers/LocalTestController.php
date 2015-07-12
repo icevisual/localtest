@@ -400,6 +400,39 @@ EOF;
 		$result = DB::select($sql);
 		$fp = fopen('cheat.sql','w') or die('Faild To Open File');
 		
+
+		$create_sql =<<<EOF
+
+
+DROP TABLE IF EXISTS `gzb_user_cheat`;
+CREATE TABLE `gzb_user_cheat` (
+  `uid` int(11) unsigned NOT NULL COMMENT '账户ID',
+	`phone` varchar(50) DEFAULT NULL COMMENT '手机',
+	`area_id` int(11) DEFAULT NULL COMMENT '所在地址',
+  `address` varchar(100) DEFAULT NULL COMMENT '详细地址',
+  `tel` varchar(20) DEFAULT NULL COMMENT '固定电话',
+  `nickname` varchar(50) DEFAULT NULL COMMENT '昵称',
+  `name` varchar(50) DEFAULT NULL COMMENT '真实姓名',
+  `sex` tinyint(2) unsigned DEFAULT NULL COMMENT '性别 0 女性，1男性',
+  `age` tinyint(3) unsigned DEFAULT NULL COMMENT '年龄',
+  `qq` varchar(15) DEFAULT NULL COMMENT 'QQ号',
+  `wechat` varchar(40) DEFAULT NULL COMMENT '微信',
+  `email` varchar(40) DEFAULT NULL COMMENT '邮箱',
+  `company` varchar(50) DEFAULT NULL COMMENT '公司名称',
+  `identity` varchar(20) DEFAULT NULL COMMENT '身份证',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `process_at` timestamp NULL DEFAULT NULL COMMENT '每次的处理时间',
+  `audit_status` tinyint(2) DEFAULT NULL COMMENT '0：审核中 2：审核通过，3：审核失败',
+  `credit_status` tinyint(2) unsigned DEFAULT NULL COMMENT '账户信用状态 0 无记录，1，信誉良好，2 有过逾期 ，3 黑名单 4，同盾可疑账户 5，四要素不一致',
+  `credit_status_info` varchar(100) DEFAULT NULL COMMENT '四要素不通过原因',
+  PRIMARY KEY (`uid`),
+  UNIQUE KEY `identity` (`identity`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='用户疑似骗子表';
+
+
+EOF;
+		fwrite($fp, $create_sql.PHP_EOL);
 		foreach ($result as $key => $value) {
 			$data = (array)$value;
 			$data['uid'] =$data['auid'];
