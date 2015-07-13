@@ -146,6 +146,11 @@ class LocalTestController extends \BaseController
 		Fun::msg(200,'',$userInfo);
 	}
 	
+	/**
+	 * 生成订单号
+	 * @param number $num
+	 * @return string
+	 */
 	protected function createRepBusNo($num = 17)
 	{
 		list($usec, $sec) = explode(" ", microtime());
@@ -159,6 +164,11 @@ class LocalTestController extends \BaseController
 	}
 	
 	
+	/**
+	 * 分割Query
+	 * @param unknown $query
+	 * @return multitype:Ambigous <>
+	 */
 	public function getQueryParams($query){
 		$params = explode('&', $query);
 		$result = [];
@@ -169,6 +179,11 @@ class LocalTestController extends \BaseController
 		return $result;
 	}
 	
+	/**
+	 * 获取URL的query
+	 * @param unknown $reqUrl
+	 * @return string|multitype:Ambigous
+	 */
 	public function getUrlQuery($reqUrl){
 		$reqUrl = urldecode($reqUrl);
 		if(!parse_url($reqUrl)['query']) return  '';
@@ -176,8 +191,13 @@ class LocalTestController extends \BaseController
 		return $this->getQueryParams($query);
 	}
 	
+	/**
+	 * 生成江浙沪的所有区ID
+	 * @param unknown $uid
+	 * @return boolean
+	 */
 	public static function outer_province($uid){
-	
+		echo 'Generate outer_province_ids...<br/>';
 		$created_at = '2014-07-10 00:00:00';
 		$provices_id = ['5','2739','1770'];//浙江、广东、上海、江苏
 		$city_id = [];
@@ -214,32 +234,13 @@ class LocalTestController extends \BaseController
 EOF;
 		file_put_contents('jiang_zhe_hu_ids.php', $content);
 	
-		edump($data);
-	
-		$user_company_addr = \User\Address::where('uid',$uid)
-		->where('user_address.type',1)
-		->where('craeted_at','<',$created_at)
-		->first();
-		if($user_company_addr){
-				
-		}
-		return true;
+		return count($data);
 	}
 	
 	
-	public function storeIds($file,$data){
-		$content =<<<EOF
-<?php
-		
-	return [
-		$data
-];
-		
-EOF;
-		file_put_contents($file, $content);
-		
-	}
-	
+	/**
+	 * 获取江浙沪内有订单才OK的人数
+	 */
 	public function getAllValidOldUid(){
 		$created_at = '2015-07-10 00:00:00';
 		$jiang_zhe_hu_ids = '26,27,28,29,30,31,32,3234,3235,3236,3237,3238,3239,33,34,37,39,41,43,47,3240,3241,3242,3243,48,49,50,51,52,53,54,3244,3245,3246,3247,55,56,57,58,59,60,3248,61,62,63,64,3249,65,66,67,68,3250,3251,69,70,71,72,3252,3253,3254,3255,3256,73,74,75,76,77,78,84,85,86,87,91,92,93,94,95,96,97,98,3257,99,100,101,102,103,104,105,106,3258,1772,1773,1774,1775,1776,1777,1778,1779,1780,1781,1782,1783,1784,1786,1787,1788,1789,1790,1791,1792,1793,1795,1796,1797,1798,1799,1800,1801,1802,1803,1804,1805,1807,1808,1809,1810,1811,1812,1813,1815,1816,1817,1818,1819,1820,1821,1822,1823,1824,1825,1827,1828,1829,1830,1831,1832,1833,1834,1836,1837,1838,1839,1840,1841,1842,1844,1845,1846,1847,1848,1849,1850,1851,1853,1854,1855,1856,1857,1858,1859,1860,1861,1863,1864,1865,1866,1867,1868,1869,1871,1872,1873,1874,1875,1876,1878,1879,1880,1881,1882,1883,1885,1886,1887,1888,1889,2741,2742,2743,2744,2745,2746,2747,2748,2749,2750,2751,2752,2753,2754,2755,2756,2757,2758,2759';
@@ -260,7 +261,11 @@ EOF;
 		edump(count($uids));
 	}
 	
-	
+	/**
+	 * 检测用户是否“江浙沪有订单”
+	 * @param unknown $uid
+	 * @return boolean
+	 */
 	public function validOldUser($uid){
 		$created_at = '2015-07-10 00:00:00';
 		$jiang_zhe_hu_ids = '26,27,28,29,30,31,32,3234,3235,3236,3237,3238,3239,33,34,37,39,41,43,47,3240,3241,3242,3243,48,49,50,51,52,53,54,3244,3245,3246,3247,55,56,57,58,59,60,3248,61,62,63,64,3249,65,66,67,68,3250,3251,69,70,71,72,3252,3253,3254,3255,3256,73,74,75,76,77,78,84,85,86,87,91,92,93,94,95,96,97,98,3257,99,100,101,102,103,104,105,106,3258,1772,1773,1774,1775,1776,1777,1778,1779,1780,1781,1782,1783,1784,1786,1787,1788,1789,1790,1791,1792,1793,1795,1796,1797,1798,1799,1800,1801,1802,1803,1804,1805,1807,1808,1809,1810,1811,1812,1813,1815,1816,1817,1818,1819,1820,1821,1822,1823,1824,1825,1827,1828,1829,1830,1831,1832,1833,1834,1836,1837,1838,1839,1840,1841,1842,1844,1845,1846,1847,1848,1849,1850,1851,1853,1854,1855,1856,1857,1858,1859,1860,1861,1863,1864,1865,1866,1867,1868,1869,1871,1872,1873,1874,1875,1876,1878,1879,1880,1881,1882,1883,1885,1886,1887,1888,1889,2741,2742,2743,2744,2745,2746,2747,2748,2749,2750,2751,2752,2753,2754,2755,2756,2757,2758,2759';
@@ -284,6 +289,11 @@ EOF;
 		return true;
 	}
 	
+	/**
+	 * uid计数
+	 * @param unknown $sql
+	 * @return number
+	 */
 	public function countUid($sql){
 		$result = DB::select($sql);
 		$uids = [];
@@ -372,7 +382,9 @@ EOF;
 	}
 
 
-
+	/**
+	 * 生成无效用户的SQL脚本
+	 */
 	public function invalidUidInsertSql(){
 		
 		$created_at = '2015-07-11 00:00:00';
@@ -398,7 +410,7 @@ EOF;
 				)
 			GROUP BY a.uid";
 		$result = DB::select($sql);
-		$fp = fopen('cheat.sql','w') or die('Faild To Open File');
+		$fp = fopen('D:\sqlLog\cheat.sql','w') or die('Faild To Open File');
 		
 
 		$create_sql =<<<EOF
@@ -437,6 +449,7 @@ EOF;
 			$data = (array)$value;
 			$data['uid'] =$data['auid'];
 			unset($data['auid']);
+			$data = array_filter($data);
 			$insertSql = createInsertSql('gzb_user_cheat', $data);
 			fwrite($fp, $insertSql.';'.PHP_EOL);
 		}
@@ -455,7 +468,7 @@ EOF;
 			LEFT JOIN gzb_order_main m on a.uid = m.uid
 			LEFT JOIN gzb_user_address addr on addr.uid= a.uid
 			LEFT JOIN gzb_user_info i on i.uid = a.uid
-			WHERE a.created_at <'$created_at'
+			WHERE a.created_at < '$created_at'
 			AND ( 
 					(m.uid is null)  
 					or  (
@@ -483,22 +496,33 @@ EOF;
 	}
 
 
-
 	public  function __call($method,$params){
 		$prefix = explode('_', $method);
 		$method = substr($method, 1 + strlen($prefix[0]));
 		
 		if($prefix[0] == 'time' && method_exists($this, $method)){
 			$t = microtime(true);
+			echo '<p>Call Method :'.$method.'</p>';
+			
+			register_shutdown_function(function($t){
+				$time =  (microtime(true) - $t);
+				//dump(func_get_args());
+				echo '<p>Time :'.$time.'s</p>';
+			},$t);
+			
 			call_user_func_array(array($this,$method),$params);
-			$time =  (microtime(true) - $t);
-			echo '<p>Time:'.$time.'s</p>';
+			
+			
 		}else{
 			throw new \Exception("Error Processing Request", 1);
 		}
 	}
 	
 	public function test(){
+		
+		$result = Fun::returnArray(200,'ok','_RPT_GAIN_A_REDPACKET',array(1,2,3,4));
+		edump($result);
+		exit;
 		set_time_limit(9000);
 		$this->time_invalidUidInsertSql();
 		exit;
@@ -536,6 +560,7 @@ EOF;
     public function index(){
     	$routes = Route::getRoutes();
     	$routes_select = array();
+    	$all_params = array();
     	foreach ($routes as $v){
     		$data 	 = array();
     		$method  = array();
@@ -561,9 +586,26 @@ EOF;
     			}
     			$params and $data['params'] += $params;
     		}
-    		isset($data['params']) and $data['params'] = $data['params'];
+    		isset($data['params']) and $all_params += $data['params'];
     		$data and $routes_select[] = $data;
     	}
-    	return View::make('localtest.index')->with('route',$routes_select);
+    	return View::make('localtest.index')
+    				->with('route',$routes_select)
+    				->with('all_params',$all_params);
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

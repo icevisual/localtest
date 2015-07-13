@@ -56,7 +56,9 @@
               	?>
 			</ul>
 			<script>
+			var all_params = <?php echo json_encode($all_params) ?>;
 			$(function(){
+				console.log(all_params);
 				$('.uris').click(function(){
 					var uri 			= $(this).data('uri');
 					var text 			= $(this).find('span').html();
@@ -87,7 +89,7 @@
 					}
 					for(var v in unfillParams){
 						var element = inputRewrite.shift();
-						$(element).val(unfillParams[v]+'=');
+						$(element).val(unfillParams[v]+'='+getDefault(unfillParams[v]));
 					}
 					for(var v in inputRewrite){
 						$(inputRewrite[v]).val('');
@@ -179,14 +181,29 @@
 	<script>
 
 	var decomposeVariables = function(variable){
+		if(typeof (variable) == "object" ){
+			for (var a in variable) {
+		        if (typeof (variable[a]) == "object") {
+		        	decomposeVariables(variable[a]); //递归遍历
+		        }
+		        else {
+			        if(all_params[a] && variable[a]){
+			        	all_params[a] = variable[a];
+					}
+		        }
+		    }
+		}else{
+			var strs = variable.split("&");
+	      	for(var i = 0; i < strs.length; i ++) {
+	      		var str = strs[i].split("=");
+	      		if(str[1]) all_params[str[0]] = str[1];
+	      	}
+		}
 		
-		
-
-
 	}
-	var isJson = function(obj){
-	    var isjson = typeof(obj) == "object" && Object.prototype.toString.call(obj).toLowerCase() == "[object object]" && !obj.length;
-	    return isjson;
+
+	var getDefault = function(name){
+		return all_params[name] && all_params[name] != true ? all_params[name] : '';
 	}
 	
 	$(function(){
@@ -201,13 +218,16 @@
 			});
 			var base = $('#baseuri-hidden').val();
 			if(param) param = param.substring(1);
+			if(param) decomposeVariables(param);
 			$.ajax({
 	            type: type,
 	            url: base + url,
 	            data: param,
 	            dataType: "text",
 	            success: function(data){
-// 	            	var obj =  JSON.parse(data);; 
+		            if(/^\{.*\}$/.test(data)){
+		            	decomposeVariables(JSON.parse(data));
+				    }
 // 		            console.log(data);
 // 		            console.log(obj);
 // 		            console.log(isJson(data));
