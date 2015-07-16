@@ -38,6 +38,13 @@ Route::group ( array (
 	// 带邀请码的注册
 	Route::post( '/register'				, 'Redpacket\RedpacketController@register' );
 	
+	
+	// 获取我的兑换码
+	Route::post ( '/is_user_black', array (
+			'before' => 'uid_token',
+			'uses' => 'Redpacket\RedpacketController@is_user_black'
+	) );
+	
 	// 获取我的兑换码
 	Route::post ( '/get_user_code', array (
 			'before' => 'uid_token',
@@ -86,7 +93,6 @@ Route::group ( array (
 	//直连支付回调处理
 	Route::any('/tranDirectReq_Notify','Redpacket\RedpacketController@tranDirectReq_Notify');
 	
-	
 } );
 
 Route::group(array('before' => 'crm_auth','prefix'=>'crm'), function () {
@@ -103,6 +109,12 @@ Route::group ( array (
 	Route::post ( '/login', 'User\UserController@login' ); // 用户登陆
 	Route::post ( '/get_findpass_code', 'User\UserController@get_findpass_code' ); // 找回密码--获取验证码
 	Route::post ( '/get_create_code', 'User\UserController@get_create_code' ); // 注册--获取验证码
+	
+	Route::post ( '/get_unbind_code', 'User\UserController@get_unbind_code' ); // 注册--获取验证码
+	Route::post ( '/get_rebind_code', 'User\UserController@get_rebind_code' ); // 注册--获取验证码
+	
+	
+	
 	Route::post ( '/find_password', 'User\UserController@find_password' ); // 找回密码
 	Route::post ( '/get_credit', 'User\UserController@get_credit' ); // 获取用户积分，分期额度
 	Route::post ( '/check_user_credit_task', 'User\UserController@check_user_credit_task' ); // 获取用户最新升级额度信息
@@ -116,6 +128,7 @@ Route::group ( array (
 	Route::post ( '/get_user_bank_info', 'User\UserController@get_user_bank_info' ); // 获取代扣用户，银行资料
 	Route::post ( '/get_credit_task', 'User\UserController@get_credit_task' ); // 获取用户升级审核列表
 	Route::post ( '/withholding_bank_card', 'User\UserController@withholding_bank_card' ); // 提交代扣银行卡
+	Route::post ( '/user_fraudmetrix', 'User\UserController@user_fraudmetrix' ); // 用户风控检测
 } );
 
 // order相关
@@ -174,7 +187,7 @@ Route::group ( array ('prefix' => 'eagleeye'), function () {
 
     Route::group ( array ('prefix' => 'user'), function () {
     	
-        Route::get ( '/all', 'Eagleeye\User\InfoController@all' );
+        Route::get ( '/all', 'Eagleeye\InfoController@all' );
     });
     
     Route::group ( array ('prefix' => 'fraudmetrix'), function () {
@@ -188,7 +201,26 @@ Route::group ( array ('prefix' => 'eagleeye'), function () {
 //地理位置
 Route::group ( array ('prefix' => 'location'), function () {
 
-	Route::post ('/Reported', 'Location\ReportedController@getData');
+    //观察上报
+	Route::post ('/Reported', 'User\ReportedController@getData');
+    //注册上报
+    Route::post ('/RegReported', 'User\ReportedController@regReport');
+
+    //获取观察
+    Route::get('/observe', 'User\GetReportedController@getObserve');
+
+    //获取注册
+    Route::get('/reg', 'User\GetReportedController@getReg');
+
+});
+
+
+//通信录
+Route::group ( array ('prefix' => 'contacts'), function () {
+
+    //提交
+    Route::post ('/v1/submit', 'User\ReportController@contactsReport');
+
 
 });
 	

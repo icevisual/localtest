@@ -1,15 +1,22 @@
 <?php
-
 /*
  * |--------------------------------------------------------------------------
- * | Application Routes
+ * | Application Helpers
  * |--------------------------------------------------------------------------
  * |
- * | Here is where you can register all of the routes for an application.
- * | It's a breeze. Simply tell Laravel the URIs it should respond to
- * | and give it the Closure to execute when that URI is requested.
+ * | Here is where you can register all of the Helpers for an application.
  * |
  */
+
+if (! function_exists ( 'exits' )) {
+	
+	function exits(){
+		
+		exit();
+	}
+	
+}
+
 
 if (! function_exists ( 'randStr' )) {
 
@@ -34,7 +41,6 @@ if (! function_exists ( 'randStr' )) {
 			$password .= substr ( $chars, (mt_rand () % strlen ( $chars )), 1 );
 		return $password;
 	}
-}else{
 }
 
 
@@ -264,7 +270,6 @@ if (! function_exists ( 'createInsertSql' )) {
 	 * @return string
 	 */
 	function createInsertSql($tbname, array $data) {
-		$data  = array_filter($data );
 		$fields = implode ( '`,`', array_keys ( $data ) );
 		$values = implode ( '\',\'', array_values ( $data ) );
 		$sql = 'insert into `' . $tbname . '`(`' . $fields . '`)values(\'' . $values . '\')';

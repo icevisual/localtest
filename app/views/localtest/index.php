@@ -155,16 +155,20 @@
 			<i class="dropdown-arrow"></i>
 			<ul class="dropdown-menu" role="menu"
 				style="overflow-y: auto; min-height: 108px;">
-				<li rel="0" class="selected">
-					<a tabindex="-1" href="#" data-base='http://localhost:86' class="opt baseuri">
-						<span class="pull-left">Localhost</span>
+				<?php 
+					$i = 0;
+				
+              		foreach ($baseUrls as $k => $v){
+              			echo '
+						<li rel="'.$i++.'" class="selected">
+					<a tabindex="-1" href="#" data-base="'.$v.'" class="opt baseuri">
+						<span class="pull-left">'.$k.'</span>
 					</a>
-				</li>
-				<li rel="1" class="selected">
-					<a tabindex="-1" href="#" data-base='http://api.gzb.renrenfenqi.com' class="opt baseuri">
-						<span class="pull-left">Test API</span>
-					</a>
-				</li>
+				</li>';
+              		}
+              	?>
+              	
+              	
 			</ul>
 			<script>
 			$(function(){
