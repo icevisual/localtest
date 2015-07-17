@@ -50,11 +50,26 @@ class Fun {
 	
 
 	public static function parse_lang($key,$params,$default){
-		static $lang 	= array();
+		static $lang 		= array();
+		static $loadFile 	= array();
 		$message 		= $default;
 		$DS 			= DIRECTORY_SEPARATOR;
-		$langfile 		= app_path()."{$DS}lang{$DS}zh_cn{$DS}Redpacket-Lang.php";
-		empty($lang) && file_exists($langfile) && $lang = include($langfile);
+		
+		//TODO:Analysis $key 
+		//A Key (For example,_RPT_WITHDRAW_NO_BALANCE)
+		$segments		= explode('_', $key);
+		$keyPrefix		= isset($segments[1]) ? $segments[1] : 'default';
+		//Load Lang File By $keyPrefix 
+		//Put This Into Config File
+		$langConfig		= array(
+			'RPT'		=> app_path()."{$DS}lang{$DS}zh_cn{$DS}Redpacket-Lang.php",	
+			'default'	=> app_path()."{$DS}lang{$DS}zh_cn{$DS}Redpacket-Lang.php",
+		);
+		$langfile		= isset($langConfig[$keyPrefix]) ? $langConfig[$keyPrefix]: $langConfig['default'];
+		if(!isset($loadFile[$langfile])){
+			$lang 		+= include($langfile);
+			$loadFile[$langfile] = true;
+		}
 		$lang && $message = isset($lang[$key])?$lang[$key]:$message;
 		if($params){
 			$regs = '/\{\d*\}/';

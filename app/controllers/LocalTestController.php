@@ -8,6 +8,9 @@ use User\Cheat;
 use User\Account;
 use Redpacket\RedpacketWithdraw;
 use Redpacket\Redpacket;
+use Ser\Lend\LendService;
+use Lib\Fun\Post;
+use User\PhoneHome;
 class LocalTestController extends \BaseController
 {
 	/**
@@ -779,9 +782,71 @@ EOF;
 		echo 'OK!';
 	}
 	
+	
+	
 	public function test(){
+		unlink('tmp.txt');
+// 		$account = '6236682990000454075';
+// 		$res = \Ser\Lend\LendService::get_bank ( $account );
+// 		edump($res);
+		
+		$validator = Validator::make(
+				array('name' => 'Dayle'),
+				array('name' => 'required|min:11')
+		);
+		$message = $validator->messages();
+		edump($message);
+		
+		
+		
+		
+// 		exit;
+// 		$prefix = DB::getTablePrefix();
+		
+		$str =<<<EOF
+18261196520
+15951707483
+15555065515
+18827358271
+18658196556
+13716705321
+18958027751
+18667032400
+18257105887
+13003623146
+15868880465
+15814408725 
+13505818794
+13612689893
+13412187068
+13480055066
+13823839358
+13627701989
+18929405188
+EOF;
+		file_put_contents('tmp.txt', $str);
+		
+		$file = file('tmp.txt');
+		
+		foreach ($file as $value){
+			$value = trim($value);
+			$sql = "DELETE FROM gzb_user_cheat where phone = '$value';".PHP_EOL;
+			echo $sql;
+		}
+		unlink('tmp.txt');
+		exit;
+		//6223093310001039281
+		
+		$validator = Validator::make(
+		    array('name' => 'Dayle'),
+		    array('name' => 'required|min:11')
+		);
+		$message = $validator->messages();
+		edump($message);
+		
+		exit;
 	//	$this->tongji();
-		$res = Account::get_phone_by_uid(291);
+		$res = Fun::returnArray(200,'ds','_RPT_WITHDRAW_NO_BALANCE');
 		edump($res);
 		exit;
 		
@@ -805,43 +870,6 @@ EOF;
 		$this->invalidUidInsertSql();
 		exit;
 		
-		exit;
-		
-		
-		$Redpacket = array (
-				'id' => 9,
-				'uid' => 296,
-				'amount' => 500,
-				'type' => 1,
-				'relation_id' => 296,
-				'status' => 2,
-				'created_at' => '2015-07-08 09:18:27',
-				'expire_at' => '2018-09-07 19:05:06',
-				'withdraw_id' => 4,
-		);
-		$RedpacketWithdraw = array (
-				'id' => 4,
-				'order_id' => 'RPT20150708092025431',
-				'uid' => 296,
-				'status' => 1,
-				'amount' => 500,
-				'reason' => '',
-				'info' => '',
-				'created_at' => '2015-07-08 09:20:25',
-				'updated_at' => '2015-07-08 09:20:33',
-		);
-		$RedpacketCode =array (
-				'id' => 3,
-				'my_code' => '69455',
-				'uid' => 296,
-				'from_code' => '31827',
-				'from_uid' => 302,
-				'created_at' => '2015-07-08 08:34:17',
-				'updated_at' => '2015-07-08 09:18:27',
-		);
-		
-		
-		exit;
 		$this->time_invalidUidInsertSql();
 		exit;
 		$this->invalidUidInsertSql();
@@ -889,7 +917,7 @@ EOF;
     				$p = $this->getFilterParams($key);
     				$p && $params += $p;
     			}
-    			$params && $data['params'] += $params;
+    			$params && $data['params']&& ( is_array($params) && $data['params'] += $params);
     		}
     		isset($data['params']) && is_array($data['params']) && $all_params += $data['params'];
     		$data && $routes_select[] = $data;
