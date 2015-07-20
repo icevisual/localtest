@@ -14,9 +14,9 @@ Route::options ( '{all}', function () {
 
 if( class_exists('LocaltestController')){
 	include __DIR__.'/helper.php';
-	Route::get('localtest',   'LocalTestController@index');
-	Route::get('test',   'LocalTestController@test');
-	Route::post ( 'get_create_code', 'LocalTestController@getCode' ); // 注册--获取验证码
+	Route::get('localtest'			, 'LocalTestController@index');
+	Route::get('test'				, 'GeneralTestController@test');
+	Route::post( 'get_create_code'	, 'GeneralTestController@getCode' ); // 注册--获取验证码
 }
 
 // Redpacket相关
@@ -37,13 +37,6 @@ Route::group ( array (
 	
 	// 带邀请码的注册
 	Route::post( '/register'				, 'Redpacket\RedpacketController@register' );
-	
-	
-	// 获取我的兑换码
-	Route::post ( '/is_user_black', array (
-			'before' => 'uid_token',
-			'uses' => 'Redpacket\RedpacketController@is_user_black'
-	) );
 	
 	// 获取我的兑换码
 	Route::post ( '/get_user_code', array (
@@ -99,21 +92,20 @@ Route::group(array('before' => 'crm_auth','prefix'=>'crm'), function () {
 	Route::any('sms', 'Crm\SmsController@index');
 });
 
-
 // user相关
 Route::group ( array (
 		'prefix' => 'user' 
 ), function () {
+	Route::get ( '/phone_home', 'User\UserController@phone_home' ); // 手机号码归属地完善
 	Route::post ( '/create', 'User\UserController@create' ); // 用户注册
 	Route::post ( '/create_user_test', 'User\UserController@create_user_test' ); // 用户注册 test
 	Route::post ( '/login', 'User\UserController@login' ); // 用户登陆
 	Route::post ( '/get_findpass_code', 'User\UserController@get_findpass_code' ); // 找回密码--获取验证码
 	Route::post ( '/get_create_code', 'User\UserController@get_create_code' ); // 注册--获取验证码
 	
-	Route::post ( '/get_unbind_code', 'User\UserController@get_unbind_code' ); // 注册--获取验证码
-	Route::post ( '/get_rebind_code', 'User\UserController@get_rebind_code' ); // 注册--获取验证码
-	
-	
+	Route::post ( '/get_unbind_code', 'User\UserController@get_unbind_code' ); 	// 解绑--获取验证码
+	Route::post ( '/get_rebind_code', 'User\UserController@get_rebind_code' ); 	// 重新绑定--获取验证码
+	Route::post ( '/rebind_phone'	, 'User\UserController@rebind_phone' ); 	// 重新绑定
 	
 	Route::post ( '/find_password', 'User\UserController@find_password' ); // 找回密码
 	Route::post ( '/get_credit', 'User\UserController@get_credit' ); // 获取用户积分，分期额度

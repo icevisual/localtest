@@ -1,6 +1,6 @@
 <?php
 
-class LocalTest1Controller extends \BaseController
+class GenerateCodeController extends \BaseController
 {
 
 	function randStr($len = 6, $format = 'NUMBER') {
