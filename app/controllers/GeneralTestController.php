@@ -486,7 +486,40 @@ EOF;
 	public function test(){
 		
 		
+		$res =  getReturnInLogFile('logs','Return');
+		edump($res);
+		$function = array(
+				LocalTestController::class,'index'
+		);
+		$function = array(
+				RedpacketService::class,'common_Validate'
+		);
+		$function = 'dump';
+		$result =  getAnnotation($function);
+		edump($result);
+		
 
+		$tables		 = DB::select('show tables;');
+		$db_name	 = Config::get('database.connections.mysql.database');
+		$table_field = 'Tables_in_'.$db_name;
+		$hasUid		 = array();
+		foreach ($tables as $value){
+			//Tables_in_guozhongbao
+			$tablename = $value->$table_field;
+			//show columns from 
+			$showtable = DB::select('show create table '.$tablename);
+			$showtable = (array)$showtable[0];
+			if(preg_match('/`uid`\s*int/', $showtable['Create Table'])){
+				$hasUid[] = $tablename;
+			}
+		}
+		dump($hasUid);
+		edumpLastSql();
+		
+		$res = get_defined_vars();
+		
+		exit;
+		
 		$validator = Validator::make(
 				array('name' => 'Dayle'),
 				array('name' => 'required|min:11')

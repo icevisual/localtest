@@ -84,20 +84,25 @@ class LocalTestController extends \BaseController
 		return $codes;
 	}
 	
+	
+	
+	
+	
+	
+	
     public function index(){
     	
     	$routes = Route::getRoutes();
     	
     	$baseUrls = array(
-    			'Localhost'=>'http://localhost:86',
-    			'Test Api'=>'http://api.gzb.renrenfenqi.com',
-    			'Api'=>'http://api.guozhongbao.com',
+    			'Localhost'	=>'http://localhost:86',
+    			'Test Api'	=>'http://api.gzb.renrenfenqi.com',
+    			'Api'		=>'http://api.guozhongbao.com',
     	);
-    	
     	
     	$routes_select = array();
     	$all_params = array();
-    	foreach ($routes as $v){
+    	foreach ($routes as  $v){
     		$data 	 = array();
     		$method  = array();
     		$methods = $v->getMethods();
