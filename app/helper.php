@@ -10,29 +10,66 @@
 
 if(! function_exists('getReturnInLogFile')){
 	
+	
 	/**
-	 * Analysis Log File In laravel 
+	 * Analysis Log File In laravel (MonoLog)
 	 */
 	function getReturnInLogFile($dir,$fileName){
-		$fileRealPath = storage_path () . "/{$dir}/" . $fileName. date ( 'Y-m-d' );
+		$filePath = storage_path () . "/{$dir}/".$fileName;
+		$i = 0;
+		while (!file_exists($fileRealPath = $filePath . date ( 'Y-m-d',strtotime("-{$i} days") ) ) && ++ $i && $i < 5);
 		if(file_exists($fileRealPath)){
-			$filelines = file($fileRealPath);
-			foreach ($filelines  as  $line){
+			$filelines = file($fileRealPath,FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+			$returns = [];
+			foreach ($filelines  as $key => $line){
 				preg_match('/\{.*\}/', $line,$matchs);
 				if($matchs){
-					$matchs = json_decode($matchs[0],true);	
-					if (json_last_error() == JSON_ERROR_NONE){
-						dump('Success');
+					$matchs = json_decode($matchs[0],true);
+					if (json_last_error() == JSON_ERROR_NONE
+							&& isset($matchs['Url']) ){
+						$HTTP_HOST 		= $_SERVER['HTTP_HOST'];
+						$matchs['Url'] 	= substr($matchs['Url'], stripos($matchs['Url'], $HTTP_HOST) + strlen($HTTP_HOST));
+						if(isset($returns[$matchs['Url']])){
+							/**
+							 * 补全返回信息
+							 */
+							$ret = end($matchs);
+							if(isset($ret['status']) && 
+									!isset($returns[$matchs['Url']] ['Return'. $ret['status']])  ){
+								$returns[$matchs['Url']] ['Return'. $ret['status']] = $ret;
+							}else{
+								//TODO::Complete Return Info
+								
+							}
+							
+						//	$returns[$matchs['Url']] = array_merge($returns[$matchs['Url']],end($matchs)) ;
+						}else{
+							if(isset($matchs['Input'])){
+								//Add Input And Return
+								//Add Success Return ?
+								$ret = end($matchs);
+								$returns[$matchs['Url']] = [
+										'Input' 	=> $matchs['Input'],
+								];
+								if(isset($ret['status'])  ){
+									$returns[$matchs['Url']] ['Return'. $ret['status']] = $ret;
+								}
+							}else{
+								//TODO::Error Handler
+								echo 'Input Field Not Found<br/>';
+							}
+						}
 					}else{
-						dump('Error');
-					}			
+						echo 'Line '.$key.' Can\'t Be Json Or Can\'t Find Url<br/>';
+					}
 				}
-				edump($matchs);
 			}
+			return  $returns;
 		}
 	}
-	
 }
+
+
 
 if(!function_exists('is_json')){
 
@@ -198,10 +235,9 @@ if (! function_exists ( 'edump' )) {
 	 * @param string $strict
 	 */
 	function edump($var) {
-		echo '<pre>';
-		var_dump($var);
-		echo '</pre>';
-		
+	//	echo '<pre>';
+		dump($var);
+	//	echo '</pre>';
 		//dump($var);
 		//call_user_func_array('dump', func_get_args());
 		exit ();

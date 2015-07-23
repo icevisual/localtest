@@ -86,6 +86,58 @@ class LocalTestController extends \BaseController
 	
 	
 	
+	public function generate_api_doc(){
+		
+		$routes = Route::getRoutes();
+		$returns =  getReturnInLogFile('logs','Return');
+		
+		$routes_select = array();
+		$all_params = array();
+		foreach ($routes as  $v){
+			$data 	 = array();
+			$method  = array();
+			$methods = $v->getMethods();
+			$uri	 = $v->getPath();
+			$action	 = $v->getActionName();
+			//获取filters
+			$filter  = $v->beforeFilters();
+			//分割action
+			$action  = $this->compileAction($action);
+			
+			$rrr =  getAnnotation($action);
+			
+			
+			if(isset($returns['/'.$uri]) && $rrr ){
+				dump($rrr);
+				edump($returns['/'.$uri]);
+			}
+			
+			
+			in_array('GET',$methods)  and $method[] = 'GET';
+			in_array('POST',$methods) and $method[] = 'POST';
+			//生成method和uri
+			!empty($method) and $data = array('method'=>'['.implode('/', $method).']','uri'=>'/'.ltrim($uri,'/') );
+			//获取action指向的方法内的参数
+			$data and $action and $data['params'] = $this->getInputParams($action);
+			//获取filter内部所需参数
+			if($data && $filter){
+				$params = array();
+				foreach($filter as $key => $value){
+					$p = $this->getFilterParams($key);
+					$p && $params += $p;
+				}
+				$params && $data['params']&& ( is_array($params) && $data['params'] += $params);
+			}
+			isset($data['params']) && is_array($data['params']) && $all_params += $data['params'];
+			$data && $routes_select[] = $data;
+		}
+		
+		
+		
+		
+		
+		edump($routes_select);
+	}
 	
 	
 	

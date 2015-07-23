@@ -15,6 +15,7 @@ Route::options ( '{all}', function () {
 if( class_exists('LocaltestController')){
 	include __DIR__.'/helper.php';
 	Route::get('localtest'			, 'LocalTestController@index');
+	Route::get('document'			, 'LocalTestController@generate_api_doc');
 	Route::get('test'				, 'GeneralTestController@test');
 	Route::post( 'get_create_code'	, 'GeneralTestController@getCode' ); // 注册--获取验证码
 }

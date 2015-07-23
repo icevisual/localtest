@@ -173,17 +173,17 @@ class Fun {
 					'func_num_args' => func_get_args()
 			), 'logs' );
 		}
-		\Ser\LogService::record ( "Return", array (
-				'Method' => \Request::method (),
-				'Input' => \Request::all (),
-				'Url' => \Request::url (),
-				'func_num_args' => get_defined_vars()
-		), 'logs' );
 		$array = array (
 				'status' => $status,
 				'message' => $message,
 				'data' => $data 
 		);
+		\Ser\LogService::record ( "Return", array (
+				'Method' => \Request::method (),
+				'Input' => \Request::all (),
+				'Url' => \Request::url (),
+				'Return' => json_decode(json_encode ( $array ) ,true) 
+		), 'logs' );
 		header ( "Content-type: application/json" );
 		exit ( json_encode ( $array ) );
 	}

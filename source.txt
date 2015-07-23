@@ -1,4 +1,5 @@
 \app\helper.php
+\app\routes.php
 \app\controllers\GeneralTestController.php
 \app\controllers\LocalTestController.php
 \app\controllers\GenerateCodeController.php

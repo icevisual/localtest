@@ -485,7 +485,6 @@ EOF;
 	
 	public function test(){
 		
-		
 		$res =  getReturnInLogFile('logs','Return');
 		edump($res);
 		$function = array(
