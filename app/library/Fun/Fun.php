@@ -170,9 +170,15 @@ class Fun {
 					'Method' => \Request::method (),
 					'Input' => \Request::all (),
 					'Url' => \Request::url (),
-					'func_num_args' => func_get_args () 
+					'func_num_args' => func_get_args()
 			), 'logs' );
 		}
+		\Ser\LogService::record ( "Return", array (
+				'Method' => \Request::method (),
+				'Input' => \Request::all (),
+				'Url' => \Request::url (),
+				'func_num_args' => get_defined_vars()
+		), 'logs' );
 		$array = array (
 				'status' => $status,
 				'message' => $message,

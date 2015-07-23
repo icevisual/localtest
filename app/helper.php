@@ -1,5 +1,4 @@
 <?php 
-function uuu(){	return false;}
 /*
  * |--------------------------------------------------------------------------
  * | Application Helpers
@@ -9,15 +8,109 @@ function uuu(){	return false;}
  * |
  */
 
-if (! function_exists ( 'exits' )) {
+if(! function_exists('getReturnInLogFile')){
 	
-	function exits(){
-		
-		exit();
+	/**
+	 * Analysis Log File In laravel 
+	 */
+	function getReturnInLogFile($dir,$fileName){
+		$fileRealPath = storage_path () . "/{$dir}/" . $fileName. date ( 'Y-m-d' );
+		if(file_exists($fileRealPath)){
+			$filelines = file($fileRealPath);
+			foreach ($filelines  as  $line){
+				preg_match('/\{.*\}/', $line,$matchs);
+				if($matchs){
+					$matchs = json_decode($matchs[0],true);	
+					if (json_last_error() == JSON_ERROR_NONE){
+						dump('Success');
+					}else{
+						dump('Error');
+					}			
+				}
+				edump($matchs);
+			}
+		}
 	}
 	
 }
 
+if(!function_exists('is_json')){
+
+	/**
+	 * 判断JSON是否合法
+	 * @param null $string
+	 * @return bool
+	 */
+	function is_json($string = null) {
+		json_decode($string);
+		return (json_last_error() == JSON_ERROR_NONE);
+	}
+
+
+}
+
+
+if(! function_exists('mark')){
+	
+	
+	/**
+	 * Calculates the time difference between two marked points.
+	 * 
+	 * @param unknown $point1
+	 * @param string $point2
+	 * @param number $decimals
+	 * @return string|multitype:NULL
+	 */
+	function mark($point1 , $point2 = '', $decimals = 4)
+	{
+		static $marker = [];
+		
+		if($point2 && $point1){
+			if ( ! isset($marker[$point2]))
+			{
+				$marker[$point2] = microtime();
+			}
+			
+			list($sm, $ss) = explode(' ', $marker[$point1]);
+			list($em, $es) = explode(' ', $marker[$point2]);
+			
+			return number_format(($em + $es) - ($sm + $ss), $decimals);
+		}else if($point1){
+			$marker[$point1] = microtime();
+		}else{
+			return $marker;
+		}
+	}
+	
+}
+
+if(!function_exists('curl')) {
+
+	function curl($url, $data, $method='POST')
+	{
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, $url);//url
+		curl_setopt($ch, CURLOPT_CUSTOMREQUEST, method);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
+		$User_Agen = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36';
+		curl_setopt($ch, CURLOPT_USERAGENT, $User_Agen);
+		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+		curl_setopt($ch, CURLOPT_AUTOREFERER, 1);
+		if (!empty($data)) {
+			curl_setopt($ch, CURLOPT_POSTFIELDS, $data);//数据
+		}
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		$info = curl_exec($ch);
+		curl_close($ch);
+		$json = json_decode($info, 1);
+		if ($json) {
+			return $json;
+		} else {
+			return false;
+		}
+	}
+}
 
 if (! function_exists ( 'randStr' )) {
 
@@ -43,9 +136,6 @@ if (! function_exists ( 'randStr' )) {
 		return $password;
 	}
 }
-
-
-
 
 if (! function_exists ( 'dump' )) {
 	
@@ -102,7 +192,6 @@ if (! function_exists ( 'edump' )) {
 
 	/**
 	 * Dump And Exit
-	 *
 	 * @param mix $var
 	 * @param string $echo
 	 * @param string $label
@@ -127,6 +216,11 @@ if (! function_exists ( 'edump' )) {
 
 
 if (! function_exists ( 'counter' )) {
+	
+	/**
+	 * A Counter Achieve By Static Function Var
+	 * @return number
+	 */
 	function counter() {
 		static $c = 0;
 		
@@ -135,6 +229,17 @@ if (! function_exists ( 'counter' )) {
 }
 
 if (! function_exists ( 'sql' )) {
+	
+	
+	
+	/**
+	 * Echo An Sql Statment Friendly
+	 * @param string $subject
+	 * 	Sql Statment
+	 * @param array $binds
+	 * 	The Bind Params
+	 * @return unknown
+	 */
 	function sql($subject, array $binds = []) {
 		
 		$pattern = '/(select\s+|from\s+|where\s+|and\s+|or\s+|\s+limit|,|(?:left|right|inner)\s+join)/i';
@@ -150,11 +255,17 @@ if (! function_exists ( 'sql' )) {
 		echo $var.'<br/>';
 	}
 	
+	/**
+	 * Echo Last Sql
+	 */
 	function sqlLastSql(){
 		$query = lastSql();
 		sql($query['query'],$query['bindings']);
 	}
 	
+	/**
+	 * Echo Last Sql And Exit 
+	 */
 	function esqlLastSql(){
 		$query = lastSql();
 		sql($query['query'],$query['bindings']);
@@ -165,6 +276,7 @@ if (! function_exists ( 'sql' )) {
 
 
 if (! function_exists ( 'object_name' )) {
+	
 	/**
 	 * 获取对象的类名
 	 * @param unknown $name
@@ -172,11 +284,17 @@ if (! function_exists ( 'object_name' )) {
 	function object_name($name) {
 		return (new \ReflectionObject ( $name ))->name;
 	}
-	function dump_object_name($name) {
-		dump ( object_name ( $name ) );
+
+	/**
+	 * Dump The Class Name Of An Given Object 
+	 * @param String $obj
+	 * 	The Given Object 
+	 */
+	function dump_object_name($obj) {
+		dump ( object_name ( $obj ) );
 	}
-	function edump_object_name($name) {
-		edump ( object_name ( $name ) );
+	function edump_object_name($obj) {
+		edump ( object_name ( $obj ) );
 	}
 	
 	
@@ -204,6 +322,17 @@ if (! function_exists ( 'object_name' )) {
 		return $fileList;
 	}
 	
+			
+	/**
+	 * Get The Anntation Array Of Given Function
+	 * @param unknown $function
+	 * @return boolean|multitype:multitype:multitype:string
+	 * 		$data = [
+					'@return' 		=> ['name' => '','type' => '','note' => ''],
+					'@param'		=> ['name' => '','type' => '','note' => ''],
+					'function' 		=> ['note' => ''],
+			];
+	 */
 	function getAnnotation($function){
 	
 		$reflect 	= getFunctionReflection($function);
@@ -223,11 +352,7 @@ if (! function_exists ( 'object_name' )) {
 						strpos($ann, '/*') === 0 )  ){
 			( $ann = trim($ann,"/* \t") ) && $annotation [] = $ann;
 		}
-		// 		$data = [
-		// 				'@return' 		=> ['name' => '','type' => '','note' => ''],
-		// 				'@param'		=> ['name' => '','type' => '','note' => ''],
-		// 				'function' 		=> ['note' => ''],
-		// 		];
+		
 		$annData 	= [];
 		$tmp 		= [];
 		foreach ($annotation as $value){
@@ -269,6 +394,11 @@ if (! function_exists ( 'object_name' )) {
 		return $annData;
 	}
 	
+	/**
+	 * Get The Paramaters Of Given Function
+	 * @param unknown $function
+	 * @return boolean|multitype:NULL
+	 */
 	function getFunctionParamaters($function){
 		$reflect 	= getFunctionReflection($function);
 		if($reflect === false) return false;
@@ -326,6 +456,11 @@ if (! function_exists ( 'object_name' )) {
 }
 
 if (! function_exists ( 'to_array' )) {
+	
+	/**
+	 * Convert Object Array To Array Recursively
+	 * @param unknown $arr
+	 */
 	function to_array(&$arr) {
 		$arr = ( array ) $arr;
 		$arr && array_walk ( $arr, function (&$v, $k) {
@@ -357,6 +492,7 @@ if (! function_exists ( 'lode' )) {
 if (! function_exists ( 'createInsertSql' )) {
 	
 	/**
+	 * Create An Insert Sql Statement
 	 * @param string $tbname        	
 	 * @param array $data        	
 	 * @return string
@@ -369,6 +505,7 @@ if (! function_exists ( 'createInsertSql' )) {
 	}
 	
 	/**
+	 * Create An Insert Sql Statement With Param Placeholder 
 	 * @param string $tbname        	
 	 * @param array $data        	
 	 * @return multitype:string multitype:
@@ -390,6 +527,7 @@ if (! function_exists ( 'createInsertSql' )) {
 if (! function_exists ( 'createUpdateSql' )) {
 	
 	/**
+	 * Create A Update Sql Statement
 	 * @param string $tbname
 	 * @param array $data
 	 * @param string $where
@@ -417,30 +555,59 @@ if (! function_exists ( 'createUpdateSql' )) {
 }
 
 if (! function_exists ( 'old' )) {
+	
+	/**
+	 * Get Previous Form Field Data
+	 * @param string $key
+	 * @param string $default
+	 */
 	function old($key = null, $default = null) {
 		return app ( 'request' )->old ( $key, $default );
 	}
 }
 
 if (! function_exists ( 'insert' )) {
+	
+	/**
+	 * Execute Insert Sql Statment
+	 * @param unknown $table
+	 * @param array $data
+	 */	
 	function insert($table, array $data) {
 		$result = createInsertSqlBind ( $table, $data );
 		return DB::insert ( $result ['sql'], $result ['data'] );
 	}
+
 }
 
 if (! function_exists ( 'update' )) {
+	
+	/**
+	 * Execute Update Sql Statment
+	 * @param unknown $table
+	 * @param array $data
+	 * @param unknown $where
+	 */
 	function update($table,array  $data, $where) {
 		$sql = createUpdateSql ( $table, $data, $where );
 		return DB::update ( $sql );
 	}
 }
 if (! function_exists ( 'lastInsertId' )) {
+	
+	/**
+	 * Get Last Insert Id
+	 */
 	function lastInsertId() {
 		return DB::getPdo ()->lastInsertId ();
 	}
 }
 if (! function_exists ( 'lastSql' )) {
+	
+	/**
+	 * Get Last Query
+	 * @return mixed
+	 */
 	function lastSql() {
 		$sql = DB::getQueryLog ();
 		$query = end ( $sql );
