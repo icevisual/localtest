@@ -485,6 +485,25 @@ EOF;
 	
 	public function test(){
 		
+		
+		$str = '{
+				"resultcode": "200",
+				"reason": "Return Successd!",
+				"result": {
+				"province": "浙江",
+				"city": "杭州",
+				"areacode": "0571",
+				"zip": "310000",
+				"company": "中国移动",
+				"card": "移动187卡"
+				}
+			}';
+		var_export(json_decode($str,true));
+		
+		
+		
+		
+		
 		$res =  getReturnInLogFile('logs','Return');
 		edump($res);
 		$function = array(

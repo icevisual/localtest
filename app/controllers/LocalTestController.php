@@ -88,6 +88,13 @@ class LocalTestController extends \BaseController
 	
 	public function generate_api_doc(){
 		
+		return View::make('localtest.doc');
+		
+		
+// 		$Route = new \Illuminate\Routing\Route();
+// 		$Route->getPrefix()
+		
+		
 		$routes = Route::getRoutes();
 		$returns =  getReturnInLogFile('logs','Return');
 		
@@ -104,13 +111,10 @@ class LocalTestController extends \BaseController
 			//分割action
 			$action  = $this->compileAction($action);
 			
-			$rrr =  getAnnotation($action);
-			
-			
-			if(isset($returns['/'.$uri]) && $rrr ){
-				dump($rrr);
-				edump($returns['/'.$uri]);
+			if(!method_exists($action[0], $action[1])){
+				continue;
 			}
+			
 			
 			
 			in_array('GET',$methods)  and $method[] = 'GET';
@@ -128,7 +132,25 @@ class LocalTestController extends \BaseController
 				}
 				$params && $data['params']&& ( is_array($params) && $data['params'] += $params);
 			}
+			
+			if(isset($data['params']) && !is_array($data['params'])){
+				edump($data['params']);
+			}
+			
 			isset($data['params']) && is_array($data['params']) && $all_params += $data['params'];
+			
+			
+// 			$rrr =  getAnnotation($action);
+				
+// 			if(isset($returns['/'.$uri]) && $rrr ){
+// 				dump($rrr);
+// 				dump($returns['/'.$uri]);
+			
+			
+// 			}
+				
+			
+			
 			$data && $routes_select[] = $data;
 		}
 		
@@ -147,7 +169,7 @@ class LocalTestController extends \BaseController
     	$routes = Route::getRoutes();
     	
     	$baseUrls = array(
-    			'Localhost'	=>'http://localhost:86',
+    			'Localhost'	=>'http://'.$_SERVER['HTTP_HOST'],
     			'Test Api'	=>'http://api.gzb.renrenfenqi.com',
     			'Api'		=>'http://api.guozhongbao.com',
     	);
@@ -160,10 +182,17 @@ class LocalTestController extends \BaseController
     		$methods = $v->getMethods();
     		$uri	 = $v->getPath();
     		$action	 = $v->getActionName();
+    		
     		//获取filters
     		$filter  = $v->beforeFilters();
     		//分割action
     		$action  = $this->compileAction($action);
+    		
+    		if(!method_exists($action[0], $action[1])){
+    			continue;
+    		}
+    		
+    		
     		in_array('GET',$methods)  and $method[] = 'GET';
     		in_array('POST',$methods) and $method[] = 'POST';
     		//生成method和uri

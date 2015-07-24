@@ -150,7 +150,7 @@
 				data-toggle="dropdown">
 				<span class="filter-option pull-left" id="baseuri-name" >Localhost</span>&nbsp;<span
 					class="caret"></span>
-				<input type="hidden" id="baseuri-hidden" value="http://localhost:86"/>
+				<input type="hidden" id="baseuri-hidden" value=""/>
 			</button>
 			<i class="dropdown-arrow"></i>
 			<ul class="dropdown-menu" role="menu"
@@ -178,6 +178,7 @@
 					$('#baseuri-name').html(text);
 					$('#baseuri-hidden').val(base);
 				});
+				$('.baseuri').eq(0).click();
 			})
 			</script>
 		</div>

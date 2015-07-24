@@ -12,6 +12,7 @@ Route::options ( '{all}', function () {
 	return $response;
 } )->where ( 'all', '.*' );
 
+
 if( class_exists('LocaltestController')){
 	include __DIR__.'/helper.php';
 	Route::get('localtest'			, 'LocalTestController@index');
@@ -24,6 +25,10 @@ if( class_exists('LocaltestController')){
 Route::group ( array (
 		'prefix' => 'redpacket'
 ), function () {
+	
+	//group_fraudmetrix
+	Route::get ( '/group_fraudmetrix'		, 'Redpacket\RedpacketController@group_fraudmetrix' );
+	
 	// 判断红包活动是否开启
 	Route::get ( '/redpacket_status'		, 'Redpacket\RedpacketController@redpacket_status' ); 
 	
@@ -89,8 +94,11 @@ Route::group ( array (
 	
 } );
 
-Route::group(array('before' => 'crm_auth','prefix'=>'crm'), function () {
+Route::group(array('before' => 'crm_auth', 'prefix' => 'crm'), function () {
 	Route::any('sms', 'Crm\SmsController@index');
+	Route::post('/financial/repayment', 'Crm\FinancialController@repayment'); //还款信息
+	Route::post('/financial/receivable', 'Crm\FinancialController@receivable'); //应收账款
+	Route::post('/financial/overdueRate', 'Crm\FinancialController@overdueRate'); //逾期率
 });
 
 // user相关
@@ -103,11 +111,10 @@ Route::group ( array (
 	Route::post ( '/login', 'User\UserController@login' ); // 用户登陆
 	Route::post ( '/get_findpass_code', 'User\UserController@get_findpass_code' ); // 找回密码--获取验证码
 	Route::post ( '/get_create_code', 'User\UserController@get_create_code' ); // 注册--获取验证码
-	
 	Route::post ( '/get_unbind_code', 'User\UserController@get_unbind_code' ); 	// 解绑--获取验证码
 	Route::post ( '/get_rebind_code', 'User\UserController@get_rebind_code' ); 	// 重新绑定--获取验证码
+	Route::post ( '/req_change_phone', 'User\UserController@req_change_phone' ); 	// 检测用户是否可以更换手机号码
 	Route::post ( '/rebind_phone'	, 'User\UserController@rebind_phone' ); 	// 重新绑定
-	
 	Route::post ( '/find_password', 'User\UserController@find_password' ); // 找回密码
 	Route::post ( '/get_credit', 'User\UserController@get_credit' ); // 获取用户积分，分期额度
 	Route::post ( '/check_user_credit_task', 'User\UserController@check_user_credit_task' ); // 获取用户最新升级额度信息
@@ -186,6 +193,9 @@ Route::group ( array ('prefix' => 'eagleeye'), function () {
     Route::group ( array ('prefix' => 'fraudmetrix'), function () {
     		 
     	Route::post ( '/getuserfin', 'Eagleeye\Fraudmetrix\FraudmetrixController@getuserfin' );
+
+    	Route::post ( '/imput_shebei', 'Eagleeye\Fraudmetrix\FraudmetrixController@imput_shebei' );
+    	
     });
 
 });

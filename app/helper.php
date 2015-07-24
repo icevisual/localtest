@@ -393,6 +393,7 @@ if (! function_exists ( 'object_name' )) {
 		$tmp 		= [];
 		foreach ($annotation as $value){
 			if(stripos($value, '@') === 0){
+				//TODO::Process @Return
 				$exp 	= explode(' ', $value);
 				$count 	= count($exp);
 				$attr	= [];
@@ -425,7 +426,7 @@ if (! function_exists ( 'object_name' )) {
 		if($tmp){
 			$tmp = array_reverse($tmp);
 			$tmp = implode(' ', $tmp);
-			$annData [] = ['function'=>['note'=>$tmp]];
+			$annData['function'] [] = ['note'=>$tmp];
 		}
 		return $annData;
 	}
