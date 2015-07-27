@@ -88,6 +88,8 @@ class LocalTestController extends \BaseController
 	
 	public function generate_api_doc(){
 		
+		dump($_SERVER);
+		exit;
 		return View::make('localtest.doc');
 		
 		
@@ -114,8 +116,6 @@ class LocalTestController extends \BaseController
 			if(!method_exists($action[0], $action[1])){
 				continue;
 			}
-			
-			
 			
 			in_array('GET',$methods)  and $method[] = 'GET';
 			in_array('POST',$methods) and $method[] = 'POST';
