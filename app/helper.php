@@ -8,6 +8,174 @@
  * |
  */
 
+if(!class_exists('Dic')){
+	
+	class Dic{
+		
+		private $dics = [];
+		
+		private $data_key = '#DATA';
+		
+		
+		public function scan($show = false){
+			$show && dump($this->dics);
+			return $this->dics;
+		}
+		
+		
+		public function complete($str){
+			$alias 	= $this->dics;
+			$mb_len = mb_strlen($str);
+			$last 	= false;
+			$hit 	= [];
+			$match = '';
+			for($i = 0 ; $i < $mb_len ; $i ++){
+				$wd = mb_substr($str, $i,1);
+				if(isset($alias[$wd])){
+					$alias = &$alias[$wd];
+				}else{
+					return $hit;
+				}
+			}
+			$rest = $alias;
+			if(isset($rest[$this->data_key]) ){
+				unset($rest[$this->data_key]);
+			}
+			foreach ($rest as $key => $value){
+				$hit[] = $key;
+			}
+			return $hit;
+		}
+		
+		
+		public function add($key,$value){
+			$mb_len = mb_strlen($key);
+			$alias = &$this->dics;
+			for($i = 0 ; $i < $mb_len ; $i ++){
+				$wd = mb_substr($key, $i,1);
+				if(isset($alias[$wd])){
+					$alias = &$alias[$wd];
+					if($i == $mb_len - 1){//End
+						$alias[$this->data_key][] = $value;
+					}
+				}else{
+					if($i == $mb_len - 1){//End
+						$alias[$wd][$this->data_key][] = $value;
+					}else{//middle
+						$alias[$wd] = [];
+						$alias = &$alias[$wd];
+					}
+				}
+			}
+		}
+			
+		/**
+		 * 查找
+		 * @param unknown $dics
+		 * @param unknown $str
+		 * @return multitype:string
+		 */
+		public function find($str){
+			$alias = $this->dics;
+			$mb_len = mb_strlen($str);
+			$last = false;
+			$ls = [];
+			$match = '';
+			for($i = 0 ; $i < $mb_len ; $i ++){
+				$wd = mb_substr($str, $i,1);
+				if(isset($alias[$wd])){
+					// 				dump($wd);
+					$last  = isset($alias[$wd][$this->data_key]) ? $alias[$wd][$this->data_key]  : $last;
+					$match .= $wd;
+					$alias = &$alias[$wd];
+				}else{
+					if($last === false){
+						break;
+					}else{
+						$ls [$match ] = $last;
+						$last = false;
+						$match = '';
+						$alias = &$dics;
+						$i-=1;
+					}
+				}
+			}
+			if($last !== false){
+				$ls [$match ] = $last;
+			}
+			return $ls;
+		}
+		
+	}
+	
+	/**
+	 * 添加一条字典
+	 * @param unknown $dics
+	 * @param unknown $key
+	 * @param unknown $value
+	 */
+	function addDic(&$dics,$key ,$value){
+		$mb_len = mb_strlen($key);
+		$alias = &$dics;
+		for($i = 0 ; $i < $mb_len ; $i ++){
+			$wd = mb_substr($key, $i,1);
+			if(isset($alias[$wd])){
+				$alias = &$alias[$wd];
+				if($i == $mb_len - 1){//End
+					$alias[] = $value;
+				}
+			}else{
+				if($i == $mb_len - 1){//End
+					$alias[$wd][0] = $value;
+				}else{//middle
+					$alias[$wd] = [];
+					$alias = &$alias[$wd];
+				}
+			}
+		}
+	}
+	
+	/**
+	 * 查找
+	 * @param unknown $dics
+	 * @param unknown $str
+	 * @return multitype:string
+	 */
+	function find($dics,$str){
+		$alias = $dics;
+		$mb_len = mb_strlen($str);
+		$last = false;
+		$ls = [];
+		$match = '';
+		for($i = 0 ; $i < $mb_len ; $i ++){
+			$wd = mb_substr($str, $i,1);
+			if(isset($alias[$wd])){
+				// 				dump($wd);
+				$last  = isset($alias[$wd][0]) ? $alias[$wd][0]  : $last;
+				$match .= $wd;
+				$alias = &$alias[$wd];
+			}else{
+				if($last === false){
+					break;
+				}else{
+					$ls [$last ] = $match;
+					$last = false;
+					$match = '';
+					$alias = &$dics;
+					$i-=1;
+				}
+			}
+		}
+		if($last !== false){
+			$ls [$last] = $match;
+		}
+		return $ls;
+	}
+	
+}
+
+
+
 if(! function_exists('getReturnInLogFile')){
 	
 	
