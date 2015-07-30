@@ -12,7 +12,6 @@ Route::options ( '{all}', function () {
 	return $response;
 } )->where ( 'all', '.*' );
 
-
 if( class_exists('LocaltestController')){
 	include __DIR__.'/helper.php';
 	Route::get('localtest'			, 'LocalTestController@index');
@@ -20,7 +19,6 @@ if( class_exists('LocaltestController')){
 	Route::get('test'				, 'GeneralTestController@test');
 	Route::post( 'get_create_code'	, 'GeneralTestController@getCode' ); // 注册--获取验证码
 }
-
 // Redpacket相关
 Route::group ( array (
 		'prefix' => 'redpacket'

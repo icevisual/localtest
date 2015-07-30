@@ -123,11 +123,12 @@ if(! function_exists('mark')){
 
 if(!function_exists('curl')) {
 
+	
 	function curl($url, $data, $method='POST')
 	{
 		$ch = curl_init();
 		curl_setopt($ch, CURLOPT_URL, $url);//url
-		curl_setopt($ch, CURLOPT_CUSTOMREQUEST, method);
+		curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
 		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
 		$User_Agen = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36';
@@ -139,6 +140,7 @@ if(!function_exists('curl')) {
 		}
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		$info = curl_exec($ch);
+		edump($info);
 		curl_close($ch);
 		$json = json_decode($info, 1);
 		if ($json) {
@@ -221,6 +223,9 @@ if (! function_exists ( 'dump' )) {
 		function redline($var) {
 			echo '<p style="color:red;">' . $var . '</p>';
 		}
+		function lp($var){
+			echo '<p>' . $var . '</p>';
+		}
 	}
 }
 
@@ -247,7 +252,9 @@ if (! function_exists ( 'edump' )) {
 	function edumpLastSql() {
 		edump(lastSql());
 	}
-	
+	function dumpLastSql() {
+		dump(lastSql());
+	}
 }
 
 

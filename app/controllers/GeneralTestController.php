@@ -616,7 +616,209 @@ EOF;
     	
     }
     
+    public function four(){
     
+    	$areas = AreaMo::get()->toArray();
+    	$area = [];
+    	foreach ($areas as $value){
+    		if($value['type'] >= 1){
+    			$key = $value['cup'].'|'.$value['name'];
+    			$area[$key] = $value['cid'];
+    		}
+    	}
+    	$stat = array_fill(0, 7, 0);
+    	$fp = fopen('address_fix_'.__FUNCTION__.'_'.(int)(time()/100).'.sql','w');
+    
+    	$result = \DB::select('SELECT * FROM gzb_user_address WHERE  area_id > 3571 ORDER BY area_id  DESC');
+    	foreach ($result as $value){
+    		$value = (array)$value;
+    		$addr = explode(' ', $value['address']);
+    		$stat[count($addr)] ++;
+    		if(count($addr) >= 4){
+    			$p_id = $area['3571|'.$addr[0]];
+    			$c_id = $area[$p_id.'|'.$addr[1]];
+    			$q_id = $area[$c_id.'|'.$addr[2]];
+    			$str = "$p_id $c_id $q_id";
+    			$sql = createUpdateSql('gzb_user_address', array('area_id'=>$q_id),array('id'=>$value['id']));
+    			fwrite($fp, $sql.';'.PHP_EOL);
+    		}
+    	}
+    	fclose($fp);
+    	dump($stat);
+    }
+    
+    /**
+     * 制作地址字典树
+     * @return multitype:
+     */
+    public function mkDic(){
+    	$areas 	= AreaMo::orderBy('type')->get()->toArray();
+    	$dics 	= [];
+    
+    	$flect  = [];
+    
+    	foreach ($areas as $value){
+    		if($value['type'] >= 1){
+    			$flect[$value['cid']] = [
+    					'cup' 	=> $value['cup'],
+    					'name' 	=> $value['name']
+    			];
+    		}
+    	}
+    
+    	$s = 3571 ;
+    
+    	foreach ($areas as $value){
+    		if($value['type'] >= 1){
+    			$names = [$value['name']];
+    			$cup = $value['cup'];
+    			while( isset($flect[$cup] )){
+    				$names[] = $flect[$cup] ['name'];
+    				$cup = $flect[$cup]['cup'];
+    			}
+    			$names 	= array_reverse($names);
+    			$name 	= implode('', $names);
+    
+    			$this->addDic($dics, $name, $value['cid']);
+    		}
+    	}
+    	return $dics;
+    }
+    
+    /**
+     * 添加一条字典
+     * @param unknown $dics
+     * @param unknown $key
+     * @param unknown $value
+     */
+    public function addDic(&$dics,$key ,$value){
+    	$mb_len = mb_strlen($key);
+    	$alias = &$dics;
+    	for($i = 0 ; $i < $mb_len ; $i ++){
+    		$wd = mb_substr($key, $i,1);
+    		if(isset($alias[$wd])){
+    			$alias = &$alias[$wd];
+    			if($i == $mb_len - 1){//End
+    				$alias[] = $value;
+    			}
+    		}else{
+    			if($i == $mb_len - 1){//End
+    				$alias[$wd][0] = $value;
+    			}else{//middle
+    				$alias[$wd] = [];
+    				$alias = &$alias[$wd];
+    			}
+    		}
+    	}
+    }
+    
+    /**
+     * 查找
+     * @param unknown $dics
+     * @param unknown $str
+     * @return multitype:string
+     */
+    public function find($dics,$str){
+    	$alias = $dics;
+    	$mb_len = mb_strlen($str);
+    	$last = false;
+    	$ls = [];
+    	$match = '';
+    	for($i = 0 ; $i < $mb_len ; $i ++){
+    		$wd = mb_substr($str, $i,1);
+    		if(isset($alias[$wd])){
+    			// 				dump($wd);
+    			$last  = isset($alias[$wd][0]) ? $alias[$wd][0]  : $last;
+    			$match .= $wd;
+    			$alias = &$alias[$wd];
+    		}else{
+    			if($last === false){
+    				break;
+    			}else{
+    				$ls [$last ] = $match;
+    				$last = false;
+    				$match = '';
+    				$alias = &$dics;
+    				$i-=1;
+    			}
+    		}
+    	}
+    	if($last !== false){
+    		$ls [$last] = $match;
+    	}
+    	return $ls;
+    }
+    
+    
+    
+    public function one(){
+    
+    
+    	$areas = AreaMo::orderBy('type')->get()->toArray();
+    	$dics = $this->mkDic();
+    	$area_lv = [];
+    	$area_id = [];
+    	$area = [];
+    	foreach ($areas as $value){
+    		if($value['type'] >= 1){
+    			$key = $value['cup'].'|'.$value['name'];
+    			$area[$key] = $value['cid'];
+    			$area_lv[$value['cid']] = $value['type'];
+    			$area_id[$value['cid']] = $value['name'];
+    		}
+    	}
+    	$stat = array_fill(0, 20, 0);
+    	// 		$str = '江苏省苏州市常熟市';
+    
+    	// // 		$res = $this->find($dics, $str);
+    	// // 		edump($res);
+    
+    	$fp = fopen('address_fix_'.__FUNCTION__.'_'.(int)(time()/100).'.sql','w');
+    	$_statistics = [ 'EPT' => 0, 'NO3' => 0 ,'UN' => 0 ];
+    	$result = \DB::select('SELECT * FROM gzb_user_address WHERE  area_id > 3571  ORDER BY area_id  DESC');
+    
+    	//	$result = \DB::select('SELECT * FROM gzb_user_address WHERE  area_id > 0 AND area_id < 3571 AND type = 1 LIMIT 30000');
+    
+    
+    	foreach ($result as $value){
+    		$value = (array)$value;
+    
+    		$addr = explode(' ', $value['address']);
+    		$stat[count($addr)] ++;
+    		if(count($addr) == 1){
+    			//	lp($value['id'].'|'.$value['created_at'].'|'.$value['address']);
+    			$res = $this->find($dics, $value['address']);
+    			$_3_id = 0;
+    			foreach ($res as $k => $v){
+    				if(isset( $area_lv[ $k ]) && $area_lv[ $k ] == 3){
+    					$_3_id = $k;
+    					break;
+    				}
+    			}
+    
+    			if(empty($res) || !$_3_id){
+    				lp($value['id'].'|'.$value['area_id'].'|'.$value['created_at'].'|'.$value['address']);
+    				dump($res);
+    				empty($res) && $_statistics['EPT'] ++;
+    				!empty($res) &&!$_3_id && $_statistics['NO3'] ++;
+    			}else{
+    					
+    				if($_3_id != $value['area_id']){
+    					$_statistics['UN'] ++;
+    					//	lp('UNMATCH|ID='.$value['id'].'|AID='.$value['area_id'].'|3ID='.$_3_id.'|ADDR='.$value['address'].'|AID_ADDR='.( isset($area_id[$value['area_id']]) ? $area_id[$value['area_id']] : 'UNSETED' ));
+    					$sql = createUpdateSql('gzb_user_address', array('area_id'=>$_3_id),array('id'=>$value['id']));
+    					fwrite($fp, $sql.';'.PHP_EOL);
+    				}
+    			}
+    		}
+    	}
+    	$stat = array_filter($stat);
+    	dump($stat);
+    	dump($_statistics);
+    	fclose($fp);
+    	exit;
+    
+    }
     
 }
 

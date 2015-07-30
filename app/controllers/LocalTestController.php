@@ -11,6 +11,9 @@ use Redpacket\Redpacket;
 use Ser\Lend\LendService;
 use Lib\Fun\Post;
 use User\PhoneHome;
+use Lib\Fun\Validate;
+use Crm\RiskController;
+use User\LoginLog;
 class LocalTestController extends \BaseController
 {
 	/**
@@ -86,8 +89,93 @@ class LocalTestController extends \BaseController
 	
 	
 	
-	public function generate_api_doc(){
+	public function phoneAttribution($phone){
+		$api = 'http://v.showji.com/Locating/showji.com20150416273007.aspx?output=json&m='.$phone;
 		
+		$ch = curl_init();
+		curl_setopt ($ch, CURLOPT_URL, $api);
+		curl_setopt ($ch, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt ($ch, CURLOPT_CONNECTTIMEOUT,10);
+		$User_Agen = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36';
+		curl_setopt($ch, CURLOPT_USERAGENT, $User_Agen);
+		$result = curl_exec($ch);
+		
+		$result = json_decode($result,true);
+		
+		if (json_last_error() == JSON_ERROR_NONE
+		 && isset($result['QueryResult']) && $result['QueryResult'] == 'True' ){
+			$data = array(
+					'province' 	=> $result['Province'],
+					'city' 		=> $result['City'],
+					'areacode' 	=> $result['AreaCode'],
+					'zip' 		=> $result['PostCode'],
+					'company' 	=> $result['TO'],
+					'card' 		=> $result['Card'],
+			);
+			return $data;
+		}
+	}
+	
+	public function mkLoginTestData(){
+		$result = Account::select('uid')->get()->toArray();
+		$uids = [];
+		foreach ($result as $v){
+			$uids[] = $v['uid'];
+		}
+		
+		$count = count($uids);
+		for($i = 0 ; $i < 10 ; $i ++){
+				
+			$index = mt_rand(0,$count - 1);
+			$rd_date = date('Y-m-d H:i:s',time() - mt_rand(0,6999999) );
+			LoginLog::log($uids[$index],$rd_date);
+		}
+	}
+	
+	
+	public function generate_api_doc(){
+		$RiskController = new RiskController();
+		$res = 	$RiskController->phoneAttributionDiffFromCompanyArea();
+		edump($res);
+		edump(date('Y-m-d 23:59:59').' 23:59:59');
+// 		$this->mkLoginTestData();
+// 		$this->four();
+// 		\Cache::put($value['name'],$value['cid'], $expiresAt);
+		exit;
+		$tables		 = \DB::select('show tables;');
+		$db_name	 = \Config::get('database.connections.mysql.database');
+		$table_field = 'Tables_in_'.$db_name;
+		$hasUid		 = array();
+		
+		$total		 = 0;
+		foreach ($tables as $value){
+			//Tables_in_guozhongbao
+			$tablename = $value->$table_field;
+			//show columns from 
+			$showtable = \DB::select('SELECT COUNT(*) COUNT FROM '.$tablename);
+			$count = $showtable[0]->COUNT;
+			$total += intval($count);
+			echo $tablename.': '.$showtable[0]->COUNT.' => '.$total.'<br/>';
+			
+		}
+		
+		
+		
+		exit;
+		
+// 		exit;
+		$RiskController = new RiskController();
+		$res = 	$RiskController->questionableAttribution();
+		edump($res);
+		
+	//	$api = 'http://www.baidu.com';
+		
+		$phone ='18258836848';//17734560137
+		$return = $this->phoneAttribution($phone);
+		
+		edump($return);
+		edump(Validate::mobile('17749771530'));
+		edump(Fun::returnLang('_RPT_STORE_WITHDRAW_BANK_UNSUPPORT'));
 		dump($_SERVER);
 		exit;
 		return View::make('localtest.doc');

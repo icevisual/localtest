@@ -19,7 +19,7 @@ for /f "tokens=*" %%i in (source.txt) do (
 	xcopy !gzb_file! !loc_file! /E /Y  >nul
 	echo COPY SUCCESS !gzb_file!
 )
-ping 127.0.0.1 >nul
+
 exit
 
 

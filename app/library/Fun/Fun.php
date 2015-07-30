@@ -39,6 +39,22 @@ class Fun {
 		return $password;
 	}
 	
+	public static function returnLang($key){
+		
+	}
+	
+	public static function getIP() {
+		if (getenv ( "HTTP_CLIENT_IP" ))
+			$ip = getenv ( "HTTP_CLIENT_IP" );
+		else if (getenv ( "HTTP_X_FORWARDED_FOR" ))
+			$ip = getenv ( "HTTP_X_FORWARDED_FOR" );
+		else if (getenv ( "REMOTE_ADDR" ))
+			$ip = getenv ( "REMOTE_ADDR" );
+		else
+			$ip = "Unknow";
+		return $ip;
+	}
+	
 	/**
 	 * 检测返回数据状态
 	 * @param unknown $returnArray
@@ -48,108 +64,25 @@ class Fun {
 		return $returnArray['status'] == 200;
 	}
 	
-
-	public static function parse_lang($key,$params,$default){
-		static $lang 		= array();
-		static $loadFile 	= array();
-		$message 		= $default;
-		$DS 			= DIRECTORY_SEPARATOR;
+	public static function returnArray($status = 200, $message = 'ok', $data = array()){
 		
-		//TODO:Analysis $key 
-		//A Key (For example,_RPT_WITHDRAW_NO_BALANCE)
-		$segments		= explode('_', $key);
-		$keyPrefix		= isset($segments[1]) ? $segments[1] : 'default';
-		//Load Lang File By $keyPrefix 
-		//Put This Into Config File
-		$langConfig		= array(
-			'RPT'		=> app_path()."{$DS}lang{$DS}zh_cn{$DS}Redpacket-Lang.php",	
-			'default'	=> app_path()."{$DS}lang{$DS}zh_cn{$DS}Redpacket-Lang.php",
-		);
-		$langfile		= isset($langConfig[$keyPrefix]) ? $langConfig[$keyPrefix]: $langConfig['default'];
-		if(!isset($loadFile[$langfile])){
-			$lang 		+= include($langfile);
-			$loadFile[$langfile] = true;
-		}
-		$lang && $message = isset($lang[$key])?$lang[$key]:$message;
-		if($params){
-			$regs = '/\{\d*\}/';
-			if (is_array($params)){
-				$regs = range(0, count($params));
-				$regs = array_map(function(&$v){
-					return '/\{'.$v.'}/';
-				}, $regs);
+		if(is_string($data)){
+			//app/service/Redpacket/
+			$DS = DIRECTORY_SEPARATOR;
+			$langfile = app_path()."{$DS}lang{$DS}zh_cn{$DS}Redpacket-Lang.php";
+			 
+			if(file_exists($langfile)){
+				$lang = include($langfile);
+				
+				$message = isset($lang[$data])?$lang[$data]:$message;
 			}
-			$message = preg_replace($regs, $params, $message);
+			$data = array();
 		}
-		return  $message;
-	}
-	
-	
-	/**
-	 * (int , string , array )
-	 * 	=> status msg data
-	 * (int , string , string )
-	 * 	=> status msg msg_placeholder
-	 * (int , string , string , string |[] )
-	 *  => status msg msg_placeholder msg_placeholder_param
-	 * (int , string , array  , string )
-	 *  => status msg data	msg_placeholder 
-	 * (int , string , array  , string , string |[] )
-	 *  => status msg data msg_placeholder msg_placeholder_param
-	 * @param number $status
-	 * @param string $message
-	 * @param unknown $data
-	 * @return multitype:number multitype: Ambigous <string, unknown>
-	 */
-	public static function returnArray($status = 200, $message = 'ok', $data = array() ){
-		
-		static $lang = array();
-		$args_num	= func_num_args();
-		$args		= func_get_args();
-		
-		$params = array(
-			'status' 			=> $status,	//状态码
-			'message' 			=> $message,//
-			'data' 				=> array(),	//
-			'msg_lang' 			=> '',		//通过它来替换message
-			'lang_params'		=> '',		//meaasge lang 的填充参数
-		);
-		
-		switch ($args_num){
-			case 3:
-				if(is_string($args[2])){
-					$params['msg_lang'] = $args[2];
-				}else if(is_array($args[2])){
-					$params['data'] 	= $args[2];
-				}
-				break;
-			case 4:
-				if(is_string($args[2])){
-					$params['msg_lang']		= $args[2];
-					$params['lang_params'] 	= $args[3];
-				}else if(is_array($args[2])){
-					$params['data'] 		= $args[2];
-					$params['msg_lang']		= $args[3];
-				}
-				break;
-			case 5:
-				$params['data'] 		= $args[2];
-				$params['msg_lang']		= $args[3];
-				$params['lang_params'] 	= $args[4];
-				break;
-		}
-		
-		$params['msg_lang'] && 
-			$params['message'] = Fun ::parse_lang(
-					$params['msg_lang'], 
-					$params['lang_params'], 
-					$params['message']
-			);
 		
 		return $array = array (
-				'status' 	=> $params['status'],
-				'message' 	=> $params['message'],
-				'data' 		=> $params['data']
+				'status' 	=> $status,
+				'message' 	=> $message,
+				'data' 		=> $data
 		);
 	}
 	
@@ -170,7 +103,7 @@ class Fun {
 					'Method' => \Request::method (),
 					'Input' => \Request::all (),
 					'Url' => \Request::url (),
-					'func_num_args' => func_get_args()
+					'func_num_args' => func_get_args () 
 			), 'logs' );
 		}
 		$array = array (
@@ -178,12 +111,6 @@ class Fun {
 				'message' => $message,
 				'data' => $data 
 		);
-		\Ser\LogService::record ( "Return", array (
-				'Method' => \Request::method (),
-				'Input' => \Request::all (),
-				'Url' => \Request::url (),
-				'Return' => json_decode(json_encode ( $array ) ,true) 
-		), 'logs' );
 		header ( "Content-type: application/json" );
 		exit ( json_encode ( $array ) );
 	}
