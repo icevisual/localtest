@@ -341,7 +341,7 @@ if(! function_exists('mark')){
 				$marker[$point2] = memory_get_usage();
 			}
 				
-			return number_format( ( $marker[$point2] - $marker[$point1] ) / $units[$unit], $decimals) .' '.$unit;
+			return number_format( ( $marker[$point2] - $marker[$point1] ) / $units[$unit], $decimals) ;//.' '.$unit;
 		}else if($point1){
 			if($point1 == '[clear]') {
 				$marker = [];
@@ -353,6 +353,65 @@ if(! function_exists('mark')){
 		}
 	}
 	
+	/**
+	 * 
+	 * @param array $xAxis
+	 * 	['categories' => range(1,20,1)];
+	 * @param array $series
+	 * 	['name' => '','data' =>[]];
+	 * @param string $yAxis_title
+	 * @param string $title
+	 * @param string $subtitle
+	 * @return \Illuminate\View\$this
+	 */
+	function chart(array $xAxis,array $series,
+			$title = 'title',$subtitle = 'subtitle',
+			$yAxis_title = 'yAxis_title'){
+		$chartData = [
+				'title' 		=> $title,
+				'subtitle' 		=> $subtitle,
+				'xAxis'			=> json_encode($xAxis),
+				'yAxis_title' 	=> $yAxis_title,
+				'series'		=> json_encode($series)
+		];
+		return \View::make('localtest.chart')->with('chartData',$chartData);
+	}
+	
+	
+	function statisticsExecTime($func, array $params,$xAxis){
+		
+		set_time_limit(170);
+		$func_name = '';
+		if(is_array($func) ){
+			if(! method_exists($func[0], $func[1])){
+				return false;
+			}
+			$func_name = object_name($func[0]).'->'.$func[1];
+		}else if (is_string($func)){
+			if(! function_exists($func)){
+				return false;
+			}
+			$func_name = $func;
+		}else{
+			return false;
+		}
+		
+		$mem 	= [];
+		$time 	= [];
+		foreach ($params as $v){
+			mark('start');
+			
+			$result =  call_user_func_array($func, (array)$v);
+			
+			$time [] 	= floatval( mark('start','end') );
+			mark('[clear]');
+		}
+		$data = [
+				['name' => 'Exec Time','data' => $time],
+		];
+		$xAxis = ['categories' => $xAxis];
+		return chart($xAxis, $data,'Function ['.htmlentities($func_name) .'] Execute Time Statistics','At '.date('Y-m-d H:i:s'),'Number');
+	}
 	
 }
 

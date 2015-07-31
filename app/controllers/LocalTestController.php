@@ -135,11 +135,12 @@ class LocalTestController extends \BaseController
 	
 	public function generate_api_doc(){
 		
-		return \View::make('localtest.chart');
+		
+// 		$res = range($start, $end);
 		
 		
 		$RiskController = new RiskController();
-		$res = 	$RiskController->continuousPhone();
+		return  	$RiskController->continuousPhone();
 		edump($res);
 		edump(date('Y-m-d 23:59:59').' 23:59:59');
 // 		$this->mkLoginTestData();
