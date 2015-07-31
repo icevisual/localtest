@@ -613,7 +613,23 @@ EOF;
      */
     public function generate_document(){
     	
+    	$dics = new \Dic();
+    	$dics->add('西湖区', 1);
+    	$dics->add('西城区', 2);
+    	$dics->add('西北区', 3);
+    	$dics->add('西但', 322);
+    	$dics->add('西北人', 3);
+    	$dics->add('西北区区', 3);
+    	$dics->add('西湖区', 4);
+    	$dics->add('西湖区区', [1,2,3]);
     	
+    	 
+    	$dics->scan(true);
+    	$res = $dics->complete('西');
+    	dump($res);
+    	dump($dics->find('西湖区区'));
+    	dump($dics->find('西湖区'));
+    	exit;
     }
     
     public function four(){

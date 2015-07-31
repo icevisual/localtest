@@ -26,9 +26,7 @@ if(!class_exists('Dic')){
 		public function complete($str){
 			$alias 	= $this->dics;
 			$mb_len = mb_strlen($str);
-			$last 	= false;
 			$hit 	= [];
-			$match = '';
 			for($i = 0 ; $i < $mb_len ; $i ++){
 				$wd = mb_substr($str, $i,1);
 				if(isset($alias[$wd])){
@@ -41,7 +39,33 @@ if(!class_exists('Dic')){
 			if(isset($rest[$this->data_key]) ){
 				unset($rest[$this->data_key]);
 			}
+			$loop = $alias;
+			$current = current($loop);
+			if(key($current) == $this->data_key){
+				$current = next($current);
+			}
+			if($current){
+				$stack = $current;
+				while ( $stack ){
+					$end = end($stack);
+					if( ! (isset($end[$this->data_key]) && count($end) == 1) ){
+						
+					}else{
+						
+					}
+				
+				}	
+			}
+			
+			
+
+			dump($loop);
+			
 			foreach ($rest as $key => $value){
+				if($value && isset($value[$this->data_key]) && count($value) == 1){
+					//End Point
+					
+				}
 				$hit[] = $key;
 			}
 			return $hit;
@@ -281,11 +305,54 @@ if(! function_exists('mark')){
 			
 			return number_format(($em + $es) - ($sm + $ss), $decimals);
 		}else if($point1){
-			$marker[$point1] = microtime();
+			if($point1 == '[clear]') {
+				$marker = [];
+			}else{
+				$marker[$point1] = microtime();
+			}
 		}else{
 			return $marker;
 		}
 	}
+	
+	
+	/**
+	 * Calculates the Memory difference between two marked points.
+	 *
+	 * @param unknown $point1
+	 * @param string $point2
+	 * @param number $decimals
+	 * @return string|multitype:NULL
+	 */
+	function memory_mark($point1 , $point2 = '',$unit = 'KB', $decimals = 2)
+	{
+		static $marker = [];
+	
+		$units = [
+			'B' 	=> 1,
+			'KB' 	=> 1024,
+			'MB' 	=> 1048576,
+			'GB' 	=> 1073741824,
+		];
+		$unit = isset($units[$unit]) ? $unit : 'KB';
+		if($point2 && $point1){
+			if ( ! isset($marker[$point2]))
+			{
+				$marker[$point2] = memory_get_usage();
+			}
+				
+			return number_format( ( $marker[$point2] - $marker[$point1] ) / $units[$unit], $decimals) .' '.$unit;
+		}else if($point1){
+			if($point1 == '[clear]') {
+				$marker = [];
+			}else{
+				$marker[$point1] = memory_get_usage();
+			}
+		}else{
+			return $marker;
+		}
+	}
+	
 	
 }
 
