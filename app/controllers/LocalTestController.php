@@ -116,21 +116,6 @@ class LocalTestController extends \BaseController
 		}
 	}
 	
-	public function mkLoginTestData(){
-		$result = Account::select('uid')->get()->toArray();
-		$uids = [];
-		foreach ($result as $v){
-			$uids[] = $v['uid'];
-		}
-		
-		$count = count($uids);
-		for($i = 0 ; $i < 10 ; $i ++){
-				
-			$index = mt_rand(0,$count - 1);
-			$rd_date = date('Y-m-d H:i:s',time() - mt_rand(0,6999999) );
-			LoginLog::log($uids[$index],$rd_date);
-		}
-	}
 	
 	
 	public function generate_api_doc(){

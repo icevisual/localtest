@@ -345,21 +345,6 @@ EOF;
 	}
 	
 	
-	public static function mark($tag){
-		static $marks = [];
-		if($tag){
-			if(isset($marks[$tag])){
-				$t = $marks[$tag];
-				$marks[$tag.'_TIME:'] =  (microtime(true) - $t);
-			}else{
-				$marks[$tag] = microtime(true);
-			}
-		}else{
-			dump($marks);
-		}
-		
-	} 
-	
 	public function getRandUid(){
 		return mt_rand(10,1000000);
 	}
@@ -834,6 +819,70 @@ EOF;
     	fclose($fp);
     	exit;
     
+    }
+    
+    public function mkLoginTestData(){
+    	mt_mark('start');
+    	
+    	$result = Account::select('uid')->limit(100000)->get()->toArray();
+    	$fp 	= fopen('D:/sqlLog/'.__FUNCTION__.'.sql','w');
+    	$number = 100000;
+    	$count 	= count($result);
+    	for($i = 0 ; $i < $number ; $i ++){
+    
+    		$index = mt_rand(0,$count - 1);
+    		$rd_date = date('Y-m-d H:i:s',time() - mt_rand(0,6999999) );
+    		$data = [
+    				'uid'		=> $result[$index]['uid'],
+    				'login_at'	=> $rd_date,
+    				'ip_addr'	=> '127.0.0.1'
+    		];
+    		$sql = createInsertSql('gzb_user_login_log', $data);
+    		fwrite($fp, $sql.';'.PHP_EOL);
+    		
+    	}
+    	fclose($fp);
+    	dump(mt_mark('start','end','MB'));
+    }
+    
+    
+    public function mkChangeLog(){
+    	$account = Account::select('uid','phone')->limit(30000)->get()->toArray();
+    	$number = count($account);
+    	$sen = [3,7,8,5];
+    	
+    	$fp = fopen('D:/sqlLog/rebindPhoneFrequently.sql','w');
+    	
+    	for($i = 0 ; $i < $number ; $i ++){
+    		$rdkey = mt_rand(0,$number-1);
+    		$rdphone = '1'.$sen[mt_rand(0,3)].mt_rand(10000,99999).mt_rand(10000,99999);
+    		if(isset($account[$rdkey]['time'])){
+    			$t_prev = strtotime($account[$rdkey]['time']);
+    			$t_now 	= time();
+    			$created_at = date('Y-m-d H:i:s',$t_now - mt_rand(0,$t_now - $t_prev) );
+    		}else{
+    			$created_at = date('Y-m-d H:i:s',time() - mt_rand(0,6999999) );
+    		}
+    		$data = array (
+    				'uid' 			=> $account[$rdkey]['uid'],
+    				'oldphone' 		=> $account[$rdkey]['phone'],
+    				'unbind_code' 	=> 'TEST',
+    				'rebind_code' 	=> 'TEST',
+    				'newphone' 	  	=> $rdphone,
+    				'created_at' 	=> $created_at,
+    				'save_status' 	=> 1,
+    		);
+    		$account[$rdkey]['phone'] = $rdphone;
+    		$account[$rdkey]['time'] = $created_at;
+    		$sql = createInsertSql('gzb_user_change_phone_log', $data);
+    		fwrite($fp, $sql.';'.PHP_EOL);
+    	}
+    	fclose($fp);
+    	exit;
+    }
+    
+    public function generate(){
+    	$this->mkLoginTestData();
     }
     
 }
