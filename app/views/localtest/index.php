@@ -23,8 +23,6 @@
 <script src="flatUI/js/inone.js"></script>
 </head>
 <body>
-	<br />
-	<br />
 	<div class="form-group">
 		<div class="alert alert-info">
 			<button type="button" class="close fui-cross" data-dismiss="alert"></button>
@@ -61,6 +59,10 @@
 			$(function(){
 				console.log(all_params);
 				$('.uris').click(function(){
+					var obj = $(this).parents('li');
+					var firstli = $('.dropdown-menu').find('li').eq(0);
+					obj.insertBefore(firstli);
+					
 					var uri 			= $(this).data('uri');
 					var text 			= $(this).find('span').html();
 					var params 			= $(this).data('params');
