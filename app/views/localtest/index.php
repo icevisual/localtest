@@ -20,6 +20,7 @@
 <script src="flatUI/js/jquery.placeholder.js"></script>
 <script src="flatUI/js/bootstrap-typeahead.js"></script>
 <script src="flatUI/js/application.js"></script>
+<script src="flatUI/js/inone.js"></script>
 </head>
 <body>
 	<br />
@@ -27,10 +28,10 @@
 	<div class="form-group">
 		<div class="alert alert-info">
 			<button type="button" class="close fui-cross" data-dismiss="alert"></button>
-			<p id="res"></p>
+			<pre id="res"></pre>
 		</div>
 	</div>
-	<div class="demo-col" style="width: 500px">
+	<div class="demo-col" style="width: 600px">
 
 		<div class="btn-group select select-block mbl">
 			<button class="btn dropdown-toggle clearfix btn-hg btn-primary"
@@ -117,8 +118,32 @@
 				class="form-control input-sm">
 		</div>
 		<div class="form-group">
-			<input type="text" name="param" name="param" value=""
-				placeholder="PARAM=VALUE" class="form-control input-sm">
+			<input type="text" name="param" value="" placeholder="PARAM=VALUE" 
+			class="form-control input-sm">
+		</div>
+		<div class="form-group">
+			<input type="text" name="param" value="" placeholder="PARAM=VALUE"
+				class="form-control input-sm">
+		</div>
+		<div class="form-group">
+			<input type="text" name="param" value="" placeholder="PARAM=VALUE"
+				class="form-control input-sm">
+		</div>
+		<div class="form-group">
+			<input type="text" name="param" value="" placeholder="PARAM=VALUE" 
+			class="form-control input-sm">
+		</div>
+		<div class="form-group">
+			<input type="text" name="param" value="" placeholder="PARAM=VALUE"
+				class="form-control input-sm">
+		</div>
+		<div class="form-group">
+			<input type="text" name="param" value="" placeholder="PARAM=VALUE"
+				class="form-control input-sm">
+		</div>
+		<div class="form-group">
+			<input type="text" name="param" value="" placeholder="PARAM=VALUE" 
+			class="form-control input-sm">
 		</div>
 		<div class="form-group">
 			<input type="text" name="param" value="" placeholder="PARAM=VALUE"
@@ -236,7 +261,8 @@
 // 		            console.log(data);
 // 		            console.log(obj);
 // 		            console.log(isJson(data));
-		            $('#res').html(hexToDec(data));
+
+		            $('#res').html(jsl.format.formatJson(hexToDec(data)));
 	            },
             	error:function(){
 					alert('ERROR');
