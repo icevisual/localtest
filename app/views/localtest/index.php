@@ -257,14 +257,17 @@
 	            data: param,
 	            dataType: "text",
 	            success: function(data){
+		            var dt = hexToDec(data);
 		            if(/^\{.*\}$/.test(data)){
 		            	decomposeVariables(JSON.parse(data));
+		            	dt = jsl.format.formatJson(dt);
 				    }
+				    
 // 		            console.log(data);
 // 		            console.log(obj);
 // 		            console.log(isJson(data));
 
-		            $('#res').html(jsl.format.formatJson(hexToDec(data)));
+		            $('#res').html(dt);
 	            },
             	error:function(){
 					alert('ERROR');

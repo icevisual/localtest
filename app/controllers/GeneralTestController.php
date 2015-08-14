@@ -469,6 +469,25 @@ EOF;
 	
 	
 	public function test(){
+		//128452
+		
+		
+		$res = RedpacketCode::get_blue_info_by_uid('128452');
+		
+		dump($res['uid']);
+		exit;
+		
+		$exchange_code = '65454';
+		$dbprefix 			= \DB::getTablePrefix();
+		$record = \DB::table('user_redpacket_code AS '.$dbprefix.'c')
+		->select('c.*','a.user_type')
+		->join('user_redpacket_account AS '.$dbprefix.'a','c.uid','=','a.uid')
+		->where('c.my_code',$exchange_code)
+		->where('c.uid','>',0)
+		->first();
+		
+		$record =  RedpacketCode::where('my_code',$exchange_code)->where('uid','>',0)->first()->toArray();
+		edump($record);
 		
 		
 		$str = '{
