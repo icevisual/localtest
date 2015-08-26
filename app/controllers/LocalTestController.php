@@ -50,7 +50,7 @@ class LocalTestController extends \BaseController
 		if(!is_array($codes) ) return false;
 		array_walk($codes, function($v,$k) use (&$params) {
 			//Input::get ( 'uid' );Input::get ( 'service' )
-			$r = preg_match('/Input::get\s*\(\s*[\'\"]([\w\d_]*)[\'\"]\s*(:?,\s*[\'\"]*[\d\w]*[\'\"]*)*\);/', $v,$matchs);
+			$r = preg_match('/Input::get\s*\(\s*[\'\"]([\w\d_]*)[\'\"]\s*(:?,\s*[\'\"]*[\d\w]*[\'\"]*)*\)/', $v,$matchs);
 			if($r){
 				$params[$matchs[1]] = true;
 			}

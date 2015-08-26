@@ -38,9 +38,7 @@ class Fun {
 			$password .= substr ( $chars, (mt_rand () % strlen ( $chars )), 1 );
 		return $password;
 	}
-	
-	public static function returnLang($key){
-		
+	public static function returnLang($key) {
 	}
 	
 	public static function getIP() {
@@ -57,39 +55,38 @@ class Fun {
 	
 	/**
 	 * 检测返回数据状态
-	 * @param unknown $returnArray
+	 * 
+	 * @param unknown $returnArray        	
 	 * @return boolean
 	 */
-	public static function returnOK($returnArray){
-		return $returnArray['status'] == 200;
+	public static function returnOK($returnArray) {
+		return $returnArray ['status'] == 200;
 	}
-	
-	public static function returnArray($status = 200, $message = 'ok', $data = array()){
-		
-		if(is_string($data)){
-			//app/service/Redpacket/
+	public static function returnArray($status = 200, $message = 'ok', $data = array()) {
+		if (is_string ( $data )) {
+			// app/service/Redpacket/
 			$DS = DIRECTORY_SEPARATOR;
-			$langfile = app_path()."{$DS}lang{$DS}zh_cn{$DS}Redpacket-Lang.php";
-			 
-			if(file_exists($langfile)){
-				$lang = include($langfile);
+			$langfile = app_path () . "{$DS}lang{$DS}zh_cn{$DS}Redpacket-Lang.php";
+			
+			if (file_exists ( $langfile )) {
+				$lang = include ($langfile);
 				
-				$message = isset($lang[$data])?$lang[$data]:$message;
+				$message = isset ( $lang [$data] ) ? $lang [$data] : $message;
 			}
-			$data = array();
+			$data = array ();
 		}
 		
 		return $array = array (
-				'status' 	=> $status,
-				'message' 	=> $message,
-				'data' 		=> $data
+				'status' => $status,
+				'message' => $message,
+				'data' => $data 
 		);
 	}
-	
-	public static function exitMsg( $data ){
-		if(!isset($data['status'])) return false;
-		extract($data);
-		static::msg($status, $message, $data);
+	public static function exitMsg($data) {
+		if (! isset ( $data ['status'] ))
+			return false;
+		extract ( $data );
+		static::msg ( $status, $message, $data );
 	}
 	
 	/**
@@ -98,14 +95,12 @@ class Fun {
 	 * @param string $data        	
 	 */
 	public static function msg($status, $message = null, $data = array()) {
-		if ($status != 200) {
-			\Ser\LogService::record ( "ReqLogs", array (
-					'Method' => \Request::method (),
-					'Input' => \Request::all (),
-					'Url' => \Request::url (),
-					'func_num_args' => func_get_args () 
-			), 'logs' );
-		}
+		\Ser\LogService::record ( "ReqLogs", array (
+				'Method' => \Request::method (),
+				'Input' => \Request::all (),
+				'Url' => \Request::url (),
+				'func_num_args' => func_get_args () 
+		), 'logs' );
 		$array = array (
 				'status' => $status,
 				'message' => $message,
@@ -119,7 +114,7 @@ class Fun {
 	 * 检查参数是否为空
 	 */
 	public static function isEmpty($k, $kname) {
-		if (empty ( $k ) && $k != "0") {
+		if (empty ( $k ) && $k != "0" && $k != "") {
 			self::msg ( 202, '嘿嘿，' . $kname . '没填' );
 		} else {
 			return true;
@@ -187,11 +182,10 @@ class Fun {
 	
 	/**
 	 * PHP 删前后空格
-	 * 
+	 *
 	 * @param unknown $str        	
 	 */
-	public static function trimall($str)
-	{
+	public static function trimall($str) {
 		$qian = array (
 				" ",
 				"　",

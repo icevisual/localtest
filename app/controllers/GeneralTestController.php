@@ -466,29 +466,39 @@ EOF;
 		echo 'OK!';
 	}
 	
-	
+	public function asd($str){
+		
+		echo "\nHi: $str";
+		var_dump(debug_backtrace());
+	}
 	
 	public function test(){
-		//128452
 		
+// 		$this->asd('asd');
+		$payDifference = null;
+		$payDifference = $payDifference ? floatval($payDifference)  : 0;
 		
-		$res = RedpacketCode::get_blue_info_by_uid('128452');
+		dump($payDifference);
 		
-		dump($res['uid']);
 		exit;
 		
-		$exchange_code = '65454';
-		$dbprefix 			= \DB::getTablePrefix();
-		$record = \DB::table('user_redpacket_code AS '.$dbprefix.'c')
-		->select('c.*','a.user_type')
-		->join('user_redpacket_account AS '.$dbprefix.'a','c.uid','=','a.uid')
-		->where('c.my_code',$exchange_code)
-		->where('c.uid','>',0)
-		->first();
+// 		include 'http://test.upload.guozhongbao.com/datum/547/547_1439341345924749.jpg';
+// 		edump($aaa);
+// 		exit;
+// 		include 'as.jpg';
+// 		edump($aaa);
+		$url = 'http://api.gzb.renrenfenqi.com/user/create_user_pic';
+		$pic = base64_encode(file_get_contents(__DIR__.'/as.jpg')) ;
+		$data = [
+				'uid' => '547',
+				'token' => 'gd4oAMFCyJ',
+				'type' => 1,
+				'pic' => $pic,
+		];
+		$res = \Lib\Fun\Post::post($url,$data);
+		edump($res);
 		
-		$record =  RedpacketCode::where('my_code',$exchange_code)->where('uid','>',0)->first()->toArray();
-		edump($record);
-		
+		exit;
 		
 		$str = '{
 				"resultcode": "200",
@@ -843,7 +853,7 @@ EOF;
     public function mkLoginTestData(){
     	mt_mark('start');
     	
-    	$result = Account::select('uid')->limit(100000)->get()->toArray();
+    	$result = Account::select('uid')->limit(10000)->get()->toArray();
     	$fp 	= fopen('D:/sqlLog/'.__FUNCTION__.'.sql','w');
     	$number = 100000;
     	$count 	= count($result);

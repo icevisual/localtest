@@ -8,6 +8,76 @@
  * |
  */
 
+
+
+/**
+ * 组装日志句柄
+ * param
+ */
+function get_caller_info ($exportType)
+{
+	$c = '';
+	$file = '';
+	$func = '';
+	$class = '';
+	$line = '';
+	$trace = debug_backtrace();
+	if (isset($trace[2])) {
+		$file = $trace[1]['file'];
+		$line = $trace[1]['line'];
+		$func = $trace[2]['function'];
+		if ((substr($func, 0, 7) == 'include') ||
+				(substr($func, 0, 7) == 'require')) {
+					$func = '';
+				}
+	} else
+		if (isset($trace[1])) {
+			$file = $trace[1]['file'];
+			$line = $trace[1]['line'];
+			$func = '';
+		}
+	if (isset($trace[3]['class'])) {
+		$class = $trace[3]['class'];
+		$func = $trace[3]['function'];
+		$file = $trace[2]['file'];
+		$line = $trace[2]['line'];
+	} else
+		if (isset($trace[2]['class'])) {
+			$class = $trace[2]['class'];
+			$func = $trace[2]['function'];
+			$file = $trace[1]['file'];
+			$line = $trace[1]['line'];
+		}
+	if ($file != '')
+		$file = basename($file);
+	$c = date("Y-m-d H:i:s");
+	$c .= ' ' . strtoupper($exportType);
+	$c .= " [";
+	$c .= ($class != '') ? $class . "." : "";
+	$c .= ($func != '') ? $func . '(' . $file . ':' . $line . ')' : '(' . $file .
+	')';
+	$c .= "]";
+	return ($c);
+}
+
+
+if(!function_exists('S')){
+	
+	function S($data){
+		$data = (array)$data;
+		$debug_data = debug_backtrace();
+		$sdata['file'] = pathinfo($debug_data[0]['file'])['filename'];
+		if(isset($debug_data[1]) && isset($debug_data[1]['function'])){
+			$sdata['file'] .= ' F:'.$debug_data[1]['function'];
+		}
+		$sdata['file'] .= ' L:'.$debug_data[0]['line'];
+		$sdata['data'] = $data;
+		\Ser\LogService::record('P',$sdata, 'logs');
+	}
+}
+
+
+
 if(!class_exists('Dic')){
 	
 	class Dic{
@@ -414,7 +484,11 @@ if(! function_exists('mark')){
 		}
 	}
 	
-	
+	function dmt_mark($point1 ='', $point2 = '',$unit = 'MB', $decimals = 4){
+		redline($point1 .' - '.$point2);
+		$res = mt_mark($point1, $point2,$unit, $decimals);
+		dump($res);
+	}
 	
 	/**
 	 * 
@@ -455,6 +529,11 @@ if(! function_exists('mark')){
 				return false;
 			}
 			$func_name = $func;
+		}else if (is_callable($func)){
+// 			if(! function_exists($func)){
+// 				return false;
+// 			}
+			$func_name = 'Closure';
 		}else{
 			return false;
 		}
@@ -486,8 +565,24 @@ if(! function_exists('mark')){
 
 if(!function_exists('curl')) {
 
+	function curl_get($api){
+// 		$api = 'http://v.showji.com/Locating/showji.com20150416273007.aspx?output=json&m='.$phone;
+		$ch = curl_init();
+		
+		curl_setopt ($ch, CURLOPT_URL, $api);
+		curl_setopt ($ch, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt ($ch, CURLOPT_CONNECTTIMEOUT,10);
+		$User_Agen = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36';
+		curl_setopt($ch, CURLOPT_USERAGENT, $User_Agen);
+		
+		$result = curl_exec($ch);
+		return $result;
+		$result = json_decode($result,true);
+		
+	}
 	
-	function curl($url, $data, $method='POST')
+	
+	function curl_post($url, $data, $method='POST')
 	{
 		$ch = curl_init();
 		curl_setopt($ch, CURLOPT_URL, $url);//url
@@ -503,8 +598,9 @@ if(!function_exists('curl')) {
 		}
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		$info = curl_exec($ch);
-		edump($info);
+		
 		curl_close($ch);
+		edump($info);
 		$json = json_decode($info, 1);
 		if ($json) {
 			return $json;
@@ -668,7 +764,7 @@ if (! function_exists ( 'sql' )) {
 		$i = 0;
 		
 		$binds && $var = preg_replace_callback ( '/\?/', function ($matchs) use(&$i, $binds) {
-			return $binds [$i ++];
+			return '\''.$binds [$i ++].'\'';
 		}, $var );
 		
 		echo $var.'<br/>';

@@ -1,10 +1,19 @@
-﻿<?php
+<?php
 Route::get ( '/', function () {
 	return 'api.gzb.root';
 } );
 
 
-	
+	if( class_exists('LocaltestController')){
+		include __DIR__.'/helper.php';
+		Route::any('risk'				, 'Crm\RiskController@risk');
+		Route::get('riskindex'			, 'Crm\RiskController@index');
+		Route::get('localtest'			, 'LocalTestController@index');
+		Route::get('document'			, 'LocalTestController@generate_api_doc');
+		Route::get('test'				, 'GeneralTestController@test');
+		Route::get('generate'			, 'GeneralTestController@generate');
+		Route::post( 'get_create_code'	, 'GeneralTestController@getCode' ); // 注册--获取验证码
+	}
 
 /**
  * V1.0
@@ -17,19 +26,6 @@ Route::options ( '{all}', function () {
 	$response->header ( 'Access-Control-Allow-Headers', 'X-Requested-With, Origin, X-Csrftoken, Content-Type, Accept' );
 	return $response;
 } )->where ( 'all', '.*' );
-
-
-if( class_exists('LocaltestController')){
-		include __DIR__.'/helper.php';
-		Route::get('risk'				, 'Crm\RiskController@index');
-		Route::get('localtest'			, 'LocalTestController@index');
-		Route::get('document'			, 'LocalTestController@generate_api_doc');
-		Route::get('test'				, 'GeneralTestController@test');
-		Route::get('generate'			, 'GeneralTestController@generate');
-		Route::post( 'get_create_code'	, 'GeneralTestController@getCode' ); // 注册--获取验证码
-	}
-
-
 
 // Redpacket相关
 Route::group ( array (
@@ -79,8 +75,6 @@ Route::group ( array (
 	Route::post ( '/financial/repayment', 'Crm\FinancialController@repayment' ); // 还款信息
 	Route::post ( '/financial/receivable', 'Crm\FinancialController@receivable' ); // 应收账款
 	Route::post ( '/financial/overdueRate', 'Crm\FinancialController@overdueRate' ); // 逾期率
-	Route::post('/financial/withholding', 'Crm\FinancialController@withholding'); //代扣管理
-	Route::post('/financial/withholding_binding', 'Crm\FinancialController@withholding_binding'); //代扣管理
 } );
 
 // user相关
@@ -136,7 +130,6 @@ Route::group ( array (
 	Route::any ( '/set_overdue_sms', 'Order\OrderController@set_overdue_sms' ); // 检查即将逾期的用户并发送短信
 	Route::any ( '/repayment', 'Order\OrderController@repayment' ); // 异步还款接口
 	Route::post ( '/repayment_hend', 'Order\OrderController@repayment_hend' ); // 手工还款接口
-	Route::post ( '/show_pay_task', 'Order\OrderController@show_pay_task' ); // 手工还款接口
 	Route::post ( '/task_order', 'Order\OrderController@task_order' ); // 审核订单接口
 	Route::post ( '/upay_pay_req_shortcut', 'Order\OrderController@upay_pay_req_shortcut' ); // 一键支付，请求trade_no
 	Route::post ( '/get_upay_ucard', 'Order\OrderController@get_upay_ucard' ); // 获取用户已经绑定的U付银行卡
@@ -152,8 +145,6 @@ Route::group ( array (
 Route::group ( array (
 		'prefix' => 'lend' 
 ), function () {
-	
-	Route::any ( '/fourFactorsAndBlackCheck', 'Lend\LendController@fourFactorsAndBlackCheck' ); // 同盾&四要素查询
 	Route::any ( '/doFraudmetrix', 'Lend\LendController@doFraudmetrix' ); // 同盾查询
 	Route::any ( '/get_bank', 'Lend\LendController@get_bank' ); // 根据银行卡号获取银行信息
 	Route::post ( '/che_audit_order', 'Lend\LendController@che_audit_order' ); // 检查用户正在审核的订单
@@ -230,18 +221,7 @@ Route::group ( array (
 	// 提交
 	Route::post ( '/v1/submit', 'User\ReportController@contactsReport' );
 } );
-
-
-// 推送
-Route::group ( array (
-    'prefix' => 'push'
-), function () {
-    //后台推送
-    Route::post ( '/crm', 'Crm\PushController@all' );
-    Route::get( '/app', 'User\AppController@home' );
-
-
-} );
+	
 	
 /**
  * v1.3.1
