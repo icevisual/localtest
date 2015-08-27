@@ -8,59 +8,6 @@
  * |
  */
 
-
-
-/**
- * 组装日志句柄
- * param
- */
-function get_caller_info ($exportType)
-{
-	$c = '';
-	$file = '';
-	$func = '';
-	$class = '';
-	$line = '';
-	$trace = debug_backtrace();
-	if (isset($trace[2])) {
-		$file = $trace[1]['file'];
-		$line = $trace[1]['line'];
-		$func = $trace[2]['function'];
-		if ((substr($func, 0, 7) == 'include') ||
-				(substr($func, 0, 7) == 'require')) {
-					$func = '';
-				}
-	} else
-		if (isset($trace[1])) {
-			$file = $trace[1]['file'];
-			$line = $trace[1]['line'];
-			$func = '';
-		}
-	if (isset($trace[3]['class'])) {
-		$class = $trace[3]['class'];
-		$func = $trace[3]['function'];
-		$file = $trace[2]['file'];
-		$line = $trace[2]['line'];
-	} else
-		if (isset($trace[2]['class'])) {
-			$class = $trace[2]['class'];
-			$func = $trace[2]['function'];
-			$file = $trace[1]['file'];
-			$line = $trace[1]['line'];
-		}
-	if ($file != '')
-		$file = basename($file);
-	$c = date("Y-m-d H:i:s");
-	$c .= ' ' . strtoupper($exportType);
-	$c .= " [";
-	$c .= ($class != '') ? $class . "." : "";
-	$c .= ($func != '') ? $func . '(' . $file . ':' . $line . ')' : '(' . $file .
-	')';
-	$c .= "]";
-	return ($c);
-}
-
-
 if(!function_exists('S')){
 	
 	function S($data){
@@ -75,8 +22,6 @@ if(!function_exists('S')){
 		\Ser\LogService::record('P',$sdata, 'logs');
 	}
 }
-
-
 
 if(!class_exists('Dic')){
 	
@@ -271,64 +216,201 @@ if(!class_exists('Dic')){
 
 
 if(! function_exists('getReturnInLogFile')){
+
+	/**
+	 * Applies the callback to the elements of the given arrays
+	 * @link http://www.php.net/manual/en/function.array-map.php
+	 * @param callback callable <p>
+	 * Callback function to run for each element in each array.
+	 * </p>
+	 * @param _ array[optional]
+	 * @return array an array containing all the elements of array1
+	 * after applying the callback function to each one.
+	 */
+	function array_map_recursive($callback, array $array1){
+		return array_map(function ($v) use($callback){
+			if(is_array($v)){
+				return array_map_recursive($callback,$v);
+			}else{
+				return call_user_func_array($callback, array($v));
+			}
+		},$array1);
+	}
+	
+	
+	function json_decode_recursive($ret){
+		return array_map_recursive(function($rt){
+			if(strpos($rt, '[object]') === 0) {
+				preg_match('/\{.*\}/', $rt,$mt);
+				if($mt){
+					$mt = json_decode($mt[0],true);
+					if(json_last_error() == JSON_ERROR_NONE){
+						return json_decode_recursive($mt);
+					}
+				}
+			}
+			$len = strlen($rt) ;
+			if($len && $rt{0} == '{' && $rt{$len-1} == '}') {
+				$mt = json_decode($rt,true);
+				if(json_last_error() == JSON_ERROR_NONE){
+					return json_decode_recursive($mt);
+				}
+			}
+			return $rt;
+		},$ret);
+	}
+	
+	function readMonoLogFile($fileRealPath,$url = ''){
+		static $returns 	= [];
+		static $loaded 		= [];
+		
+		if($url){
+			if(isset($returns[$url])){
+				return [$url => $returns[$url]];
+			}
+		}else{
+			if(isset($loaded [$fileRealPath])){
+				return $returns;
+			}else{
+				$loaded [$fileRealPath] = true;
+			}
+		}
+		
+		
+		
+		$filelines 	= file($fileRealPath,FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+		$HTTP_HOST 	= '';
+		$keys = ['status' ,'message','data' ,];
+		foreach ($filelines  as $key => $line){
+			preg_match('/\{.*\}/', $line,$matchs);
+		
+			if($matchs){
+				$matchs = json_decode($matchs[0],true);
+					
+				if (json_last_error() == JSON_ERROR_NONE
+						&& isset($matchs['Url'])
+						&& isset($matchs['func_num_args'])
+						&& (!$url || endsWith($matchs['Url'],$url) )
+						){
+					if(!$HTTP_HOST){//Get Host Name
+						preg_match('/^http(:?s)?:\/\/[^\/]*/', $matchs['Url'],$mh);
+						if($mh){
+							$HTTP_HOST = $mh[0];
+						}
+					}
+					
+					$matchs['Url'] 	= substr($matchs['Url'], stripos($matchs['Url'], $HTTP_HOST) + strlen($HTTP_HOST));
+					
+					$matchs['Url'] = '/'.ltrim($matchs['Url'],'/');
+					
+					$ret = $matchs['func_num_args'];
+					count($ret) == 2 && $ret [] = [];
+					$ret = array_combine($keys, $ret);
+					///Filter When Return Data Contains [object]
+					//[object] (User\Account: {"uid":159007,"password":"","salt":"","account_status":0,"my_code":"031077"})
+					//array_map_recursive
+					$ret = json_decode_recursive($ret);
+					//TODO :Remove Large Return
+					if(isset($returns[$matchs['Url']])){
+						/**
+						 * 补全返回信息
+						 */
+						if(isset($ret['status']) &&
+								!isset($returns[$matchs['Url']] ['Return'][ $ret['status']] )  ){
+							$returns[$matchs['Url']] ['Return'][ $ret['status']] = $ret;
+						}else if(isset($returns[$matchs['Url']] ['Return'][ $ret['status']] ) ){
+							//TODO :Complete Return Info
+							//Complete Input Data
+						}
+						$returns[$matchs['Url']]['Params'] = array_filter($returns[$matchs['Url']]['Params']) + $matchs['Input'];
+					}else{
+						if(isset($matchs['Input'])){
+							//Add Input And Return
+							$returns[$matchs['Url']] = [
+									'Url' 		=> $matchs['Url'],
+									'Params' 	=> $matchs['Input'],
+									'Method'   	=> $matchs['Method'] ,
+							];
+							if(isset($ret['status'])  ){
+								$returns[$matchs['Url']] ['Return'][ $ret['status']] = $ret;
+							}
+						}else{
+							//TODO :Error Handler
+							//echo 'Input Field Not Found<br/>';
+// 							return false;
+						}
+					}
+				}else{
+					//echo 'Line '.$key.' Can\'t Be Json Or Can\'t Find Url<br/>';
+// 					return false;
+				}
+			}
+		}
+		
+		if($url){
+			if(isset($returns[$url])){
+				return [$url => $returns[$url]];
+			}else return false;
+		}
+		return  $returns;
+	}
+	
+	/**
+	 * Analysis Log File In laravel (MonoLog)
+	 */
+	function getApiInstance($api ){
+		
+		$dir 	  = 'logs';
+		$fileName = 'ReqLogs';
+				
+		$filePath = storage_path () . "/{$dir}/".$fileName;
+		$t = 0;
+		
+		$result 	= false;
+		for ($i = 0 ; $i < 10 ; $i ++){
+			$fileRealPath = $filePath . date ( 'Y-m-d',strtotime("-{$i} days") ) ;
+			if(mt_rand(0,10) > 7) readMonoLogFile($fileRealPath);
+			if(file_exists($fileRealPath)){
+				$res = readMonoLogFile($fileRealPath,$api);
+				if($res !== false){
+					$t ++ ;
+					$result = $res;
+				}
+				if($t >= 2){
+					break;
+				}
+			}
+		}
+		
+		return $result;
+	}
 	
 	
 	/**
 	 * Analysis Log File In laravel (MonoLog)
 	 */
-	function getReturnInLogFile($dir,$fileName){
+	function getReturnInLogFile($dir,$fileName,$last = 0,$url =''){
 		$filePath = storage_path () . "/{$dir}/".$fileName;
-		$i = 0;
+		$i = $last;
 		while (!file_exists($fileRealPath = $filePath . date ( 'Y-m-d',strtotime("-{$i} days") ) ) && ++ $i && $i < 5);
+// 		echo $fileRealPath;
 		if(file_exists($fileRealPath)){
-			$filelines = file($fileRealPath,FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-			$returns = [];
-			foreach ($filelines  as $key => $line){
-				preg_match('/\{.*\}/', $line,$matchs);
-				if($matchs){
-					$matchs = json_decode($matchs[0],true);
-					if (json_last_error() == JSON_ERROR_NONE
-							&& isset($matchs['Url']) ){
-						$HTTP_HOST 		= $_SERVER['HTTP_HOST'];
-						$matchs['Url'] 	= substr($matchs['Url'], stripos($matchs['Url'], $HTTP_HOST) + strlen($HTTP_HOST));
-						if(isset($returns[$matchs['Url']])){
-							/**
-							 * 补全返回信息
-							 */
-							$ret = end($matchs);
-							if(isset($ret['status']) && 
-									!isset($returns[$matchs['Url']] ['Return'. $ret['status']])  ){
-								$returns[$matchs['Url']] ['Return'. $ret['status']] = $ret;
-							}else{
-								//TODO::Complete Return Info
-								
-							}
-							
-						//	$returns[$matchs['Url']] = array_merge($returns[$matchs['Url']],end($matchs)) ;
-						}else{
-							if(isset($matchs['Input'])){
-								//Add Input And Return
-								//Add Success Return ?
-								$ret = end($matchs);
-								$returns[$matchs['Url']] = [
-										'Input' 	=> $matchs['Input'],
-								];
-								if(isset($ret['status'])  ){
-									$returns[$matchs['Url']] ['Return'. $ret['status']] = $ret;
-								}
-							}else{
-								//TODO::Error Handler
-								echo 'Input Field Not Found<br/>';
-							}
-						}
-					}else{
-						echo 'Line '.$key.' Can\'t Be Json Or Can\'t Find Url<br/>';
-					}
-				}
-			}
-			return  $returns;
+			return readMonoLogFile($fileRealPath,$url);
 		}
 	}
+	
+	
+	function endsWith($haystack, $needles)
+	{
+		foreach ((array) $needles as $needle)
+		{
+			if ((string) $needle === substr($haystack, -strlen($needle))) return true;
+		}
+	
+		return false;
+	}
+	
+	
 }
 
 
@@ -741,6 +823,7 @@ if (! function_exists ( 'counter' )) {
 		
 		return $c ++;
 	}
+	
 }
 
 if (! function_exists ( 'sql' )) {
