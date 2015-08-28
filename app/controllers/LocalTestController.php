@@ -203,10 +203,22 @@ class LocalTestController extends \BaseController
 	}
 	
 	
-	
-	
     public function index(){
-    	
+
+    	//获取接口调用频度
+    	$dir 	  		= 'logs';
+    	$fileName 		= 'ReqLogs';
+    	$filePath 		= storage_path () . "/{$dir}/".$fileName;
+    	$fileRealPath 	= $filePath . date ( 'Y-m-d' ) ;
+    	file_exists($fileRealPath) && readMonoLogFile($fileRealPath);
+    	$todayReq = readMonoLogFile('');
+    	$todayReq = array_map(function($v){
+    		return $v['Times'];
+    	}, $todayReq);
+		asort($todayReq);
+		
+		
+		
     	$routes 	= Route::getRoutes();
     	
     	$baseUrls 	= array(
@@ -251,23 +263,28 @@ class LocalTestController extends \BaseController
     			$params && $data['params']&& ( is_array($params) && $data['params'] += $params);
     		}
     		isset($data['params']) && is_array($data['params']) && $all_params += $data['params'];
-    		$data && $routes_select[] = $data;
+    		$data &&($routes_select[] = $data ) 
+    		&& isset($todayReq[$data['uri']] ) 
+    			&& $todayReq[$data['uri']] = count($routes_select) - 1;
     	}
+    	
+    	//高频度置前
+    	$res = [];
+    	foreach ($todayReq as $k => $v){
+    		$add = $routes_select[$v];
+			array_unshift($res,$add);
+			unset($routes_select[$v]);
+    	}
+    	foreach ($routes_select as $k => $v){
+    		$res [] = $v;
+    	}
+    	unset($routes_select);
     	return View::make('localtest.index')
-    				->with('route',$routes_select)
+    				->with('route',$res)
     				->with('baseUrls',$baseUrls)
     				->with('all_params',$all_params);
     }
     
-    
-    /**
-     * 生成接口文档
-     * 参数源
-     */
-    public function generate_document(){
-    	
-    	
-    }
     
     
     

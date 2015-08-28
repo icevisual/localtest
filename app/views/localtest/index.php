@@ -8,6 +8,14 @@
 <!-- Loading Flat UI -->
 <link href="flatUI/css/flat-ui.css" rel="stylesheet">
 <link href="flatUI/css/demo.css" rel="stylesheet">
+
+<style type="text/css">
+#res{
+	max-height:800px;
+	overflow: scroll;
+}
+</style>
+
 <script src="flatUI/js/jquery-1.8.3.min.js"></script>
 <script src="flatUI/js/jquery-ui-1.10.3.custom.min.js"></script>
 <script src="flatUI/js/jquery.ui.touch-punch.min.js"></script>
@@ -23,14 +31,14 @@
 <script src="flatUI/js/inone.js"></script>
 </head>
 <body>
-	<div class="form-group">
+	<div class="form-group" style="width:700px;float:left;">
 		<div class="alert alert-info">
 			<button type="button" class="close fui-cross" data-dismiss="alert"></button>
 			<pre id="res"></pre>
 		</div>
 	</div>
 	<div class="demo-col" style="width: 600px">
-
+		<br/>
 		<div class="btn-group select select-block mbl">
 			<button class="btn dropdown-toggle clearfix btn-hg btn-primary"
 				data-toggle="dropdown">
@@ -134,6 +142,38 @@
 		<div class="form-group">
 			<input type="text" name="param" value="" placeholder="PARAM=VALUE" 
 			class="form-control input-sm">
+		</div>
+		<div class="form-group">
+			<input type="text" name="param" value="" placeholder="PARAM=VALUE"
+				class="form-control input-sm">
+		</div>
+		<div class="form-group">
+			<input type="text" name="param" value="" placeholder="PARAM=VALUE"
+				class="form-control input-sm">
+		</div>
+		<div class="form-group">
+			<input type="text" name="param" value="" placeholder="PARAM=VALUE" 
+			class="form-control input-sm">
+		</div>
+		<div class="form-group">
+			<input type="text" name="param" value="" placeholder="PARAM=VALUE"
+				class="form-control input-sm">
+		</div>
+		<div class="form-group">
+			<input type="text" name="param" value="" placeholder="PARAM=VALUE"
+				class="form-control input-sm">
+		</div>
+		<div class="form-group">
+			<input type="text" name="param" value="" placeholder="PARAM=VALUE"
+				class="form-control input-sm">
+		</div>
+		<div class="form-group">
+			<input type="text" name="param" value="" placeholder="PARAM=VALUE" 
+			class="form-control input-sm">
+		</div>
+		<div class="form-group">
+			<input type="text" name="param" value="" placeholder="PARAM=VALUE"
+				class="form-control input-sm">
 		</div>
 		<div class="form-group">
 			<input type="text" name="param" value="" placeholder="PARAM=VALUE"

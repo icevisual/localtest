@@ -309,9 +309,8 @@ if(! function_exists('getReturnInLogFile')){
 			}
 		}
 		
-		
-		
-		$filelines 	= file($fileRealPath,FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+		$filelines = [];
+		file_exists($fileRealPath) && $filelines 	= file($fileRealPath,FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 		$HTTP_HOST 	= '';
 		$keys = ['status' ,'message','data' ,];
 		foreach ($filelines  as $key => $line){
@@ -349,6 +348,7 @@ if(! function_exists('getReturnInLogFile')){
 					
 					//TODO :Remove Large Return
 					if(isset($returns[$matchs['Url']])){
+						$returns[$matchs['Url']]['Times'] ++;
 						/**
 						 * 补全返回信息
 						 */
@@ -364,6 +364,7 @@ if(! function_exists('getReturnInLogFile')){
 						if(isset($matchs['Input'])){
 							//Add Input And Return
 							$returns[$matchs['Url']] = [
+									'Times'		=> 1,
 									'Url' 		=> $matchs['Url'],
 									'Params' 	=> $matchs['Input'],
 									'Method'   	=> $matchs['Method'] ,

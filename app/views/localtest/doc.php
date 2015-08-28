@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -14,6 +13,13 @@
 <meta content="authenticity_token" name="csrf-param">
 <meta content="9dwC+PgnYepFQ0RDgEH/gLZSBuY0lMGbSF/ezMAdKEY="
 	name="csrf-token">
+	<script src="flatUI/js/inone.js"></script>
+	<script>
+	var hexToDec = function(str) {
+	    str=str.replace(/\\/g,"%");
+	    return unescape(str);
+	}
+	</script>
 </head>
 <body class="win">
 	<div class="wrapper">
@@ -36,79 +42,39 @@
 									style="font-weight: normal; color: rgb(51, 51, 51); margin-top: 1em !important; margin-bottom: 1em !important; font-size: 1.2em !important; line-height: 1.6 !important;">
 									<b>（1）获取解绑验证码</b>
 								</h3>
-								<ul>
-									<li><b>URL</b>:/user/get_unbind_code</li>
-									<li><b>METHOD</b>:POST</li>
-									<li><b>params</b>:
-										<ul>
-											<li>uid 用户UID</li>
-											<li>token&nbsp;</li>
-										</ul></li>
-									<li><b>返回格式</b>:</li>
-								</ul>
-								<pre>
-									<code>{
-    "status": 200,
-    "message": "短信发送成功！",
-    "data": []
-}
-<br>
-									</code>
-								</pre>
+								<?php $i = 0; 
+								foreach ($list as $k => $v){
+									$i ++; 
+								?>
 								<p
 									style="margin-bottom: 1.5em; font-size: 16px; color: rgb(51, 51, 51); word-wrap: break-word; font-family: arial, sans-serif; line-height: 25.6000003814697px;">
-									<b>（2）获取新手机绑定验证码</b><br>
-								</p>
+									<b><?php echo '（'.$i.'）'.$v['title']['note'];?></b><br>
+								</p>	
 								<ul>
-									<li><b>URL</b>:/user/get_rebind_code</li>
-									<li><b>METHOD &nbsp;</b>POST</li>
-									<li><b>params</b>:
+									<li><b>URL:&nbsp;&nbsp;</b><?php echo $v['data']['Url'];?></li>
+									<li><b>METHOD:&nbsp;&nbsp;</b><?php echo $v['data']['Method'];?></li>
+									<li><b>PARAMS:&nbsp;&nbsp;</b>
 										<ul>
-											<li>uid &nbsp; &nbsp; 用户UID</li>
-											<li>token&nbsp;</li>
-											<li>phone 新的手机号码<br>
-											</li>
+											<?php foreach ($v['data']['Params'] as $k1 => $v1){?>
+											<li><?php echo $k1;?></li>
+											<?php }?>
 										</ul></li>
 									<li><b>返回格式</b>:</li>
 								</ul>
 								<pre>
-									<code>{
-    "status": 200,
-    "message": "短信发送成功！",
-    "data": []
-}
-<br>
-									</code>
+									<code><?php 
+		foreach ($v['data']['Return'] as $k2 => $v2){
+			$res = json_encode($v2);
+			$res = str_replace('\u', "%u", $res);
+			echo "返回状态码为{$v2['status']}\n";
+			echo '<script>document.write( jsl.format.formatJson(((unescape(\''.json_encode($v2).'\')))) +"\n" );</script>';;
+// 			echo '<br>';
+		}
+?></code>
 								</pre>
-								<p
-									style="margin-bottom: 1.5em; font-size: 16px; color: rgb(51, 51, 51); word-wrap: break-word; font-family: arial, sans-serif; line-height: 25.6000003814697px;">
-									<b>（3）重新绑定手机</b><br>
-								</p>
-								<ul>
-									<li><b>URL</b>:/user/rebind_phone</li>
-									<li><b>METHOD</b>:POST</li>
-									<li><b>params</b>:
-										<ul>
-											<li>uid &nbsp; &nbsp; 用户UID</li>
-											<li>token&nbsp;</li>
-											<li>phone 新的手机号码<br>
-											</li>
-											<li>unbind_code 解绑验证码<br>
-											</li>
-											<li>rebind_code 绑定验证码<br>
-											</li>
-										</ul></li>
-									<li><b>返回格式</b>:</li>
-								</ul>
-								<pre>
-									<code>{
-    "status": 200,
-    "message": "ok",
-    "data": []
-}
-<br>
-									</code>
-								</pre>
+								<?php  } ?>
+								
+								
 							</div>
 						</div>
 
@@ -128,6 +94,7 @@
 		<div class="footer">
 			© <a href="http://mycolorway.com/" target="_blank">彩程设计</a>
 		</div>
+		
 	</div>
 	</a>
 </body>
