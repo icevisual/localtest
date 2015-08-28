@@ -237,7 +237,31 @@ if(! function_exists('getReturnInLogFile')){
 		},$array1);
 	}
 	
+	/**
+	 * 减除过长连续数组
+	 * @param array $array1
+	 * @return multitype:|multitype:Ambigous <> Ambigous <Ambigous <>>
+	 */
+	function array_clear( array $array1,$limit = 5){
+		return array_map(function ($v) use ($limit) {
+			if(is_array($v)){
+				if(count($v) > $limit ){
+					$keyys = array_keys($v);
+					if(isset($keyys[$limit]) && $keyys[$limit] == $limit){
+						$v = [$v[0],$v[1]];
+					}
+				}
+// 				$v = array_filter($v);
+				return array_clear($v);
+			}else{
+				return $v;//call_user_func_array($callback, array($v));
+			}
+		},$array1);
+	}
 	
+	/**
+	 * Decode Json String recursively
+	 */
 	function json_decode_recursive($ret){
 		return array_map_recursive(function($rt){
 			if(strpos($rt, '[object]') === 0) {
@@ -260,6 +284,12 @@ if(! function_exists('getReturnInLogFile')){
 		},$ret);
 	}
 	
+	/**
+	 * 读取日志内的接口调用记录
+	 * @param unknown $fileRealPath
+	 * @param string $url
+	 * @return multitype:Ambigous <> |boolean|multitype:|multitype:Ambigous <Ambigous> |Ambigous <number, multitype:, multitype:Ambigous , multitype:multitype:unknown string  >
+	 */ 
 	function readMonoLogFile($fileRealPath,$url = ''){
 		static $returns 	= [];
 		static $loaded 		= [];
@@ -267,6 +297,9 @@ if(! function_exists('getReturnInLogFile')){
 		if($url){
 			if(isset($returns[$url])){
 				return [$url => $returns[$url]];
+			}
+			if(isset($loaded [$fileRealPath])){
+				return false;
 			}
 		}else{
 			if(isset($loaded [$fileRealPath])){
@@ -310,6 +343,10 @@ if(! function_exists('getReturnInLogFile')){
 					//[object] (User\Account: {"uid":159007,"password":"","salt":"","account_status":0,"my_code":"031077"})
 					//array_map_recursive
 					$ret = json_decode_recursive($ret);
+					
+					
+					$ret = array_clear($ret);
+					
 					//TODO :Remove Large Return
 					if(isset($returns[$matchs['Url']])){
 						/**
@@ -358,7 +395,7 @@ if(! function_exists('getReturnInLogFile')){
 	/**
 	 * Analysis Log File In laravel (MonoLog)
 	 */
-	function getApiInstance($api ){
+	function getApiInvokingLog($api ){
 		
 		$dir 	  = 'logs';
 		$fileName = 'ReqLogs';
@@ -369,7 +406,8 @@ if(! function_exists('getReturnInLogFile')){
 		$result 	= false;
 		for ($i = 0 ; $i < 10 ; $i ++){
 			$fileRealPath = $filePath . date ( 'Y-m-d',strtotime("-{$i} days") ) ;
-			if(mt_rand(0,10) > 7) readMonoLogFile($fileRealPath);
+// 			if(mt_rand(0,10) > 7 && 
+			file_exists($fileRealPath) && readMonoLogFile($fileRealPath);
 			if(file_exists($fileRealPath)){
 				$res = readMonoLogFile($fileRealPath,$api);
 				if($res !== false){

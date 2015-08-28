@@ -11,6 +11,10 @@ use Redpacket\Redpacket;
 use Ser\Lend\LendService;
 use Lib\Fun\Post;
 use User\PhoneHome;
+use Lib\Fun\PointsV2;
+use Illuminate\Filesystem\Filesystem;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Intervention\Image\Facades\Image;
 class GeneralTestController extends \BaseController
 {
 	
@@ -466,39 +470,183 @@ EOF;
 		echo 'OK!';
 	}
 	
-	public function asd($str){
-		
-		echo "\nHi: $str";
-		var_dump(debug_backtrace());
-	}
+	
 	
 	public function test(){
 		
-// 		$this->asd('asd');
-		$payDifference = null;
-		$payDifference = $payDifference ? floatval($payDifference)  : 0;
+		$needles ='123123123123';
+		 $haystack= '123123';
+		 $res = endsWith($haystack, $needles);
+		 edump($res);
+// 		$func = 'endWith';
+		$func = 'endsWiths';
+		$xAxis = range(0, 100);
+		$params =[];
+		foreach ($xAxis as $v){
+			$params [] = [$haystack,$needles];
+		}
+		return statisticsExecTime($func, $params, $xAxis);
+		return chart(['categories' => $xAxis], $data);
+		$res = endsWiths($haystack, $needles);
+		dump($res);
 		
-		dump($payDifference);
+		$res = \Str::endsWith($haystack, $needles);
+		edump($res);
+		$a = ['a' => '2','b' => '1b','c' => '1d'];
+		
+		$b = ['a' => '2a','b' => '2b','d' => '2e'];
+		$b[] = $b;
+		$a [] = $b;
+		dump($a);
+		
+		dump(json_decode(json_encode([json_encode($a)])),true);
+		exit;
+		
+		
+		$c = array_map_recursive(function($v){
+			return '--'.$v;
+		},$a);
+		dump($c);
+		exit;
+		
+		array_walk_recursive($a, function($v,$k){
+			
+			echo $v;
+			
+		});
 		
 		exit;
 		
-// 		include 'http://test.upload.guozhongbao.com/datum/547/547_1439341345924749.jpg';
-// 		edump($aaa);
-// 		exit;
-// 		include 'as.jpg';
-// 		edump($aaa);
-		$url = 'http://api.gzb.renrenfenqi.com/user/create_user_pic';
-		$pic = base64_encode(file_get_contents(__DIR__.'/as.jpg')) ;
-		$data = [
-				'uid' => '547',
-				'token' => 'gd4oAMFCyJ',
-				'type' => 1,
-				'pic' => $pic,
-		];
-		$res = \Lib\Fun\Post::post($url,$data);
+		$c = array_map(function($v){
+			if(is_string($v))
+			return $v.'--';
+		},$a);
+		edump($c);
+		
+		
+		edump($a + $b);
+		
+		
+		exit();
+		S([123]);
+		
+		$RedpacketService = new Ser\V1_3_1\Redpacket\RedpacketService();
+		$RedpacketService->_insert_config();
+// 		$res = 	$RedpacketService->is_from_open_area(17);
+		
+// 		edump($res);
+		exit;
+		
+		$rsv = array ( '江苏南京' => '025', '江苏无锡' => '0510', '江苏苏州' => '0512', '江苏常州' => '0519', '浙江杭州' => '0571', '浙江宁波' => '0574', '浙江金华' => '0579', '浙江温州' => '0577', '上海上海' => '021', '安徽合肥' => '0551', '广东广州' => '020', '广东深圳' => '0755', '广东东莞' => '0769', '广东中山' => '0760', '广东佛山' => '0757', );
+		//江苏南京、江苏无锡、江苏苏州、江苏常州、浙江杭州、浙江宁波、浙江金华、浙江温州、上海上海、安徽合肥、广东广州、广东深圳、广东东莞、广东中山、广东佛山
+		$sh = ['江苏南京','江苏无锡','江苏苏州','江苏常州','浙江杭州','浙江宁波','浙江金华','浙江温州','上海上海','安徽合肥','广东广州','广东深圳','广东东莞','广东中山','广东佛山'];
+		dump(count($sh));
+		$result = [];
+		foreach ($sh as $v){
+			$str1  = mb_substr($v, 0,2);
+			$str2  = mb_substr($v, 2);
+			
+			$res = Account::select('areacode')
+			->where('province',$str1)->where('city',$str2)->first()->toArray();
+			$result[$v] = $res['areacode'];
+		}
+		var_export($result);
+		exit;
+// 		Account::
+		
+		
+		
+		$res = file_get_contents('http://www.ip138.com/post/search.asp?area=%C8%FD%C3%F7%CA%D0&action=area2zone');
+		edump($res);
+		$res = curl_post('http://www.ip138.com/post/search.asp',['area'=>'三明市','action'=>'area2zone']);
+		edump($res);
+		//
+		
+		$res = curl_get('http://www.ip138.com/post/search.asp?area=三明市&action=area2zone');
+		edump($res);
+		// open an image file
+		$img = \Image::make(base_path().'/public/foo.jpg');
+		
+		dump($img->width());
+		dump($img->height());
+		
+		// now you are able to resize the instance
+		$img->resize(10, 240);
+		// and insert a watermark for example
+// 		$img->insert('public/watermark.png');
+		
+		// finally we save the image as a new file
+		$img->save(base_path().'/public/bar.jpg');
+		
+		
+		
+		edump(storage_path());
+		$filename = 'D:\wnmp\www\gzb_master\app\12.jpg';
+// 		$filename = 'D:\wnmp\www\gzb_master\app\helper.php';
+// 		$res = Fun::file_type($filename);
+// 		edump($res);
+		$Filesystem = new Filesystem();
+		$res = $Filesystem->type($filename);
 		edump($res);
 		
+		$uid = '63';
+		$pics = \User\Data::where('uid',$uid)->get()->toArray();
+		
+		edump($pics);
+		
+		
+		$count = \User\Data::where('uid',$uid)->whereIn('type',array(0,1,2,3))->count();
+		edump($count);
+		
+		
+		
+		$orderid= '1440117695578665';
+		$uid = '547';
+
+		$payday = \Order\Periods::select('payday')->where('uid',$uid)->where('orderid',$orderid)->first();
+		$payday = $payday['payday'];sqlLastSql();
+		edump($payday);
+		
+		
+		$dt = \Carbon\Carbon::createFromDate ( date ( 'Y' ), date ( 'm' ), date ( 'd' ) )->addDays ( 1 );
+		$dt = $dt->format ( 'Y-m-d' );
+		$day = Fun::diffBetweenTwoDays ( $dt, date('Y-m-d') );
+		 
+		edump(Fun::diffBetweenTwoDays ('2015-08-11 00:00:00','2015-07-12'));
+		edump($day);
+		$res = PointsV2::loan_setting(1000, 1,30);
+		
+		dump($res);
 		exit;
+		//128452
+		
+		mt_mark('start');
+// 		get_caller_info('asd');
+		$res = debug_backtrace();
+		if(isset($res[1])){
+			dump($res[1]);
+		}
+		dmt_mark('start','end');
+		
+		exit;
+		
+		$res = RedpacketCode::get_blue_info_by_uid('128452');
+		
+		dump($res['uid']);
+		exit;
+		
+		$exchange_code = '65454';
+		$dbprefix 			= \DB::getTablePrefix();
+		$record = \DB::table('user_redpacket_code AS '.$dbprefix.'c')
+		->select('c.*','a.user_type')
+		->join('user_redpacket_account AS '.$dbprefix.'a','c.uid','=','a.uid')
+		->where('c.my_code',$exchange_code)
+		->where('c.uid','>',0)
+		->first();
+		
+		$record =  RedpacketCode::where('my_code',$exchange_code)->where('uid','>',0)->first()->toArray();
+		edump($record);
+		
 		
 		$str = '{
 				"resultcode": "200",
@@ -853,7 +1001,7 @@ EOF;
     public function mkLoginTestData(){
     	mt_mark('start');
     	
-    	$result = Account::select('uid')->limit(10000)->get()->toArray();
+    	$result = Account::select('uid')->limit(100000)->get()->toArray();
     	$fp 	= fopen('D:/sqlLog/'.__FUNCTION__.'.sql','w');
     	$number = 100000;
     	$count 	= count($result);

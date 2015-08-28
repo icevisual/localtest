@@ -119,73 +119,32 @@ class LocalTestController extends \BaseController
 	
 	
 	public function generate_api_doc(){
+
+// 		mt_mark('start');
+// 		$res = getApiInstance('/v1.3.1/redpacket/register');
+// 		dmt_mark('start','end');
+// 		edump($res);
 		
 		
-// 		$res = range($start, $end);
-		
-		
-		$RiskController = new RiskController();
-		return  	$RiskController->continuousPhone();
-		edump($res);
-		edump(date('Y-m-d 23:59:59').' 23:59:59');
-// 		$this->mkLoginTestData();
-// 		$this->four();
-// 		\Cache::put($value['name'],$value['cid'], $expiresAt);
-		exit;
-		$tables		 = \DB::select('show tables;');
-		$db_name	 = \Config::get('database.connections.mysql.database');
-		$table_field = 'Tables_in_'.$db_name;
-		$hasUid		 = array();
-		
-		$total		 = 0;
-		foreach ($tables as $value){
-			//Tables_in_guozhongbao
-			$tablename = $value->$table_field;
-			//show columns from 
-			$showtable = \DB::select('SELECT COUNT(*) COUNT FROM '.$tablename);
-			$count = $showtable[0]->COUNT;
-			$total += intval($count);
-			echo $tablename.': '.$showtable[0]->COUNT.' => '.$total.'<br/>';
-			
-		}
-		
-		
-		
-		exit;
-		
-// 		exit;
-		$RiskController = new RiskController();
-		$res = 	$RiskController->questionableAttribution();
-		edump($res);
-		
-	//	$api = 'http://www.baidu.com';
-		
-		$phone ='18258836848';//17734560137
-		$return = $this->phoneAttribution($phone);
-		
-		edump($return);
-		edump(Validate::mobile('17749771530'));
-		edump(Fun::returnLang('_RPT_STORE_WITHDRAW_BANK_UNSUPPORT'));
-		dump($_SERVER);
-		exit;
-		return View::make('localtest.doc');
-		
-		
+		// 		return View::make('localtest.doc');
+		// 		$res = getReturnInLogFile('logs','ReqLogs',9,'');
+		// 		$res = getReturnInLogFile('logs','ReqLogs',10);		
 // 		$Route = new \Illuminate\Routing\Route();
 // 		$Route->getPrefix()
 		
 		
 		$routes = Route::getRoutes();
-		$returns =  getReturnInLogFile('logs','Return');
-		
+// 		$returns =  getReturnInLogFile('logs','Return');
+		$showData = [];
 		$routes_select = array();
 		$all_params = array();
 		foreach ($routes as  $v){
 			$data 	 = array();
 			$method  = array();
-			$methods = $v->getMethods();
-			$uri	 = $v->getPath();
-			$action	 = $v->getActionName();
+			$methods = $v->getMethods();//	array(1) {[0] => string(4) "POST"}
+			$uri	 = $v->getPath();//string(15) "get_create_code"
+			$action	 = $v->getActionName(); //string(29) "GeneralTestController@getCode"
+			
 			//获取filters
 			$filter  = $v->beforeFilters();
 			//分割action
@@ -198,6 +157,7 @@ class LocalTestController extends \BaseController
 			in_array('GET',$methods)  and $method[] = 'GET';
 			in_array('POST',$methods) and $method[] = 'POST';
 			//生成method和uri
+			$uri = '/'.ltrim($uri,'/');
 			!empty($method) and $data = array('method'=>'['.implode('/', $method).']','uri'=>'/'.ltrim($uri,'/') );
 			//获取action指向的方法内的参数
 			$data and $action and $data['params'] = $this->getInputParams($action);
@@ -217,26 +177,29 @@ class LocalTestController extends \BaseController
 			
 			isset($data['params']) && is_array($data['params']) && $all_params += $data['params'];
 			
+			$rrr =  getAnnotation($action);
+
+			if(isset($rrr['function'])){
+				$function = $rrr['function'][0];
+				$dt = getApiInvokingLog($uri);
+				$dt && $showData[$uri] = [
+						'title' =>$function,
+						'data' =>current($dt),
+				];
+			}
 			
-// 			$rrr =  getAnnotation($action);
-				
+			
 // 			if(isset($returns['/'.$uri]) && $rrr ){
 // 				dump($rrr);
 // 				dump($returns['/'.$uri]);
-			
-			
 // 			}
-				
-			
 			
 			$data && $routes_select[] = $data;
 		}
 		
+		return View::make('localtest.doc')->with('list',$showData);
 		
-		
-		
-		
-		edump($routes_select);
+		edump($showData);
 	}
 	
 	
@@ -244,12 +207,13 @@ class LocalTestController extends \BaseController
 	
     public function index(){
     	
-    	$routes = Route::getRoutes();
+    	$routes 	= Route::getRoutes();
     	
-    	$baseUrls = array(
+    	$baseUrls 	= array(
     			'Localhost'	=>'http://'.$_SERVER['HTTP_HOST'],
     			'Test Api'	=>'http://api.gzb.renrenfenqi.com',
     			'Api'		=>'http://api.guozhongbao.com',
+    			'Stage Api'	=>'http://stage.api.guozhongbao.com',
     	);
     	
     	$routes_select = array();
