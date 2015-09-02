@@ -267,9 +267,9 @@ if(! function_exists('getReturnInLogFile')){
 			if(strpos($rt, '[object]') === 0) {
 				preg_match('/\{.*\}/', $rt,$mt);
 				if($mt){
-					$mt = json_decode($mt[0],true);
+					$mtr = json_decode(($mt[0]),true);
 					if(json_last_error() == JSON_ERROR_NONE){
-						return json_decode_recursive($mt);
+						return json_decode_recursive($mtr);
 					}
 				}
 			}
@@ -358,8 +358,25 @@ if(! function_exists('getReturnInLogFile')){
 						}else if(isset($returns[$matchs['Url']] ['Return'][ $ret['status']] ) ){
 							//TODO :Complete Return Info
 							//Complete Input Data
+							if(!isset($returns[$matchs['Url']]['Return'][$ret['status']]['data'] )){
+								edump($returns[$matchs['Url']]['Return'][$ret['status']]);
+							}
+								
+							if(is_array( $ret['data']) ){
+								
+								$returns[$matchs['Url']]['Return'][ $ret['status']] ['data']
+								= array_filter($returns[$matchs['Url']]['Return'][$ret['status']]['data'])
+								+ $ret['data'];
+								ksort($returns[$matchs['Url']]['Return'][ $ret['status']] ['data']);
+							}
+							
+// 							isset($returns[$matchs['Url']]['Return'][$ret['status']]['data'] ) &&
+								
+								
+							
 						}
 						$returns[$matchs['Url']]['Params'] = array_filter($returns[$matchs['Url']]['Params']) + $matchs['Input'];
+					
 					}else{
 						if(isset($matchs['Input'])){
 							//Add Input And Return

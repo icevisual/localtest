@@ -334,7 +334,7 @@
 		    return "\\u"+res.join("\\u");
 		}
 		var hexToDec = function(str) {
-		    str=str.replace(/\\/g,"%");
+		    str=str.replace(/\\u/g,"%u");
 		    return unescape(str);
 		}
 		

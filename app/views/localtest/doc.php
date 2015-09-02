@@ -29,19 +29,19 @@
 				<div class="page-inner" data-since="2015-07-23 05:34:22 UTC"
 					data-creator-guid="28f8e5d867514645bb4eaa55be762e7a"
 					data-project-creator="7a8721f013854cca98585726b18bc244"
-					data-page-name="1.3版本优化-重新绑定手机" id="page-doc">
+					data-page-name="API" id="page-doc">
 					<div class="doc-wrap">
 						<div class="doc printable"
 							data-created-at="2015-07-17 15:45:11 +0800"
 							data-updated-at="2015-07-17 15:45:11 +0800">
 							<h3 class="doc-title">
-								<span class="document-rest">1.3版本优化-重新绑定手机</span>
+								<span class="document-rest">API</span>
 							</h3>
 							<div id="doc-content" class="doc-content editor-style ">
-								<h3
-									style="font-weight: normal; color: rgb(51, 51, 51); margin-top: 1em !important; margin-bottom: 1em !important; font-size: 1.2em !important; line-height: 1.6 !important;">
-									<b>（1）获取解绑验证码</b>
-								</h3>
+<!-- 								<h3 -->
+<!-- 									style="font-weight: normal; color: rgb(51, 51, 51); margin-top: 1em !important; margin-bottom: 1em !important; font-size: 1.2em !important; line-height: 1.6 !important;"> -->
+<!-- 									<b>（1）获取解绑验证码</b> -->
+<!-- 								</h3> -->
 								<?php $i = 0; 
 								foreach ($list as $k => $v){
 									$i ++; 
@@ -66,7 +66,7 @@
 		foreach ($v['data']['Return'] as $k2 => $v2){
 			$res = json_encode($v2);
 			$res = str_replace('\u', "%u", $res);
-			echo "返回状态码为{$v2['status']}\n";
+			echo "返回状态码为{$k2}\n";
 			echo '<script>document.write( jsl.format.formatJson(((unescape(\''.json_encode($v2).'\')))) +"\n" );</script>';;
 // 			echo '<br>';
 		}
@@ -81,12 +81,7 @@
 					</div>
 
 					<div class="comments streams">
-						<div class="event event-common event-document-add"
-							id="event-23242335"
-							data-ancestor-guid="76727c2113c84402866a7757c2cb5fef"
-							data-ancestor-name="国中宝接口"
-							data-ancestor-url="/projects/76727c2113c84402866a7757c2cb5fef"></div>
-
+						<div class="event event-common event-document-add"></div>
 					</div>
 				</div>
 			</div>

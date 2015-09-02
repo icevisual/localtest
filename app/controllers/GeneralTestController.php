@@ -18,6 +18,133 @@ use Intervention\Image\Facades\Image;
 class GeneralTestController extends \BaseController
 {
 	
+	public function test(){
+		
+		
+		
+		
+		
+// 		$this->four();
+		$this->one();
+		
+		
+		
+		
+		exit;
+		$typeArray = array(10 => 0,1,2,3) + range(30,38);
+		
+		edump($typeArray);		
+		$str = '{\"uid\":165646,\"nickname\":null,\"name\":\"刘能飞\",\"sex\":0,\"age\":0,\"qq\":null,\"wechat\":null,\"email\":null,\"emergency_contact\":null,\"company\":\"韵达快递公司\",\"join_at\":null,\"identity\":\"513002198810120218\",\"created_at\":\"2015-08-24 10:00:55\",\"updated_at\":\"2015-08-24 10:03:25\",\"process_at\":\"2015-08-24 10:03:25\",\"audit_status\":3,\"credit_status\":3,\"fraudmetrix_status\":0,\"credit_status_info\":\"0\",\"address\":[{\"id\":53657,\"uid\":165646,\"area_id\":2756,\"address\":\"上海 上海市 青浦区 上海市青浦区徐径镇华徐公路508号\",\"tel\":\"15088789827\",\"type\":1,\"created_at\":\"2015-08-24 10:00:55\",\"updated_at\":\"2015-08-24 10:00:55\"},{\"id\":53658,\"uid\":165646,\"area_id\":2756,\"address\":\"上海 上海市 青浦区 上海市青浦区徐径镇华徐公公路508号\",\"tel\":null,\"type\":0,\"created_at\":\"2015-08-24 10:00:55\",\"updated_at\":\"2015-08-24 10:00:55\"}],\"payway\":[{\"id\":27877,\"uid\":165646,\"card\":\"6013820800106129339\",\"payname\":\"中国银行-长城电子借记卡-借记卡\",\"payway\":1,\"created_at\":\"2015-08-24 10:00:55\",\"updated_at\":\"2015-08-24 10:00:55\"}],\"data\":[{\"picurl\":\"http://localhost:91/datum/165646/165646_1440381470545426.jpg\",\"type\":0,\"info\":null},{\"picurl\":\"http://localhost:91/datum/165646/165646_1440381494583929.jpg\",\"type\":1,\"info\":null},{\"picurl\":\"http://localhost:91/datum/165646/165646_1440381498395195.jpg\",\"type\":2,\"info\":null},{\"picurl\":\"http://localhost:91/datum/165646/165646_1440381543073887.jpg\",\"type\":3,\"info\":null}],\"info_refund\":{\"id\":2010,\"uid\":165646,\"name\":\"姓名错误1430\",\"company\":null,\"identity\":\"身份证错误1 1\",\"card\":\"数字问题 1\",\"area_id\":\"省市区错误test\",\"comaddress\":\"省市区错误test\",\"comtel\":null,\"homeaddress\":null,\"hometel\":null,\"pic\":null,\"created_at\":\"2015-08-31 16:15:21\",\"updated_at\":\"2015-08-31 16:40:29\"}}';
+		edump(json_decode(stripcslashes($str),true));
+		$res = json_decode_recursive();
+		edump($res);
+		
+		set_time_limit(0);
+		$allData =  \DB::table('three_factor')->where('run',0)->get();
+		$userSerivce = new \Ser\User\UserService();
+		$exec_count = 0;
+		foreach ($allData as $value){
+			$exec_count ++;
+			$value			= (array)$value;
+			$bank_account 	= $value['card'];
+			$name			= $value['name'];
+			$identity 		= $value['identity'];
+			$result 		= $userSerivce->common_Validate($bank_account, $name, $identity);
+			
+			$updateData = [
+					'run' 		=> 1,
+					'return'	=> $result['return'],
+					'message'	=> $result['data'],
+			];
+			\DB::table('three_factor')->where('id',$value['id'])->update($updateData);
+			sleep(0.1);
+		}
+		echo 'Exec Count :'.$exec_count;
+		exit;
+		
+		$RedpacketService = new \Ser\V1_3_1\Redpacket\RedpacketService();
+		$res = $RedpacketService->verity_process(341);
+		edump($res);
+		exit;
+		// open an image file
+		$file = base_path().'\public\foo.jpg';
+		
+		$res = Fun::thumb($file,1920);
+		dump($res);
+		exit();
+		$pathinfo = pathinfo($file);
+		$path = $pathinfo['dirname'].DIRECTORY_SEPARATOR.$pathinfo['filename'].'.'.$pathinfo['extension'];
+		edump($path);
+		
+		$img = \Image::make($file);
+		
+		$width = $img->width();
+		$height = $img->height();
+		$max = 800;
+		dump($width);
+		dump($height);
+		if($width > $height){
+			$height = intval($height * $max / $width ) ;
+			$width  = $max;
+		}else{
+			$width = intval($width * $max / $height ) ;
+			$height  = $max;
+		}
+		
+		
+		dump($width);
+		dump($height);
+		
+		// now you are able to resize the instance
+		$img->resize($width, $height);
+		// and insert a watermark for example
+		// 		$img->insert('public/watermark.png');
+		
+		// finally we save the image as a new file
+		$img->save(base_path().'/public/bar.jpg');
+		
+// 		header('Cache-Control: private, max-age=0, no-store, no-cache, must-revalidate');
+// 		header('Cache-Control: post-check=0, pre-check=0', false);
+// 		header('Pragma: no-cache');
+// // 		header("content-type: image/jpg");
+// 		header("Content-Type: image/jpeg;text/html; charset=utf-8");
+// 		echo file_get_contents(base_path().'/public/bar.jpg',true);
+		exit;
+		
+		edump(storage_path());
+		$filename = 'D:\wnmp\www\gzb_master\app\12.jpg';
+		// 		$filename = 'D:\wnmp\www\gzb_master\app\helper.php';
+		// 		$res = Fun::file_type($filename);
+		// 		edump($res);
+		
+	}
+	
+	public function process_three_factor(){
+		set_time_limit(0);
+		$allData =  \DB::table('three_factor')->where('run',0)->get();
+		$userSerivce = new \Ser\User\UserService();
+		$exec_count = 0;
+		foreach ($allData as $value){
+			$exec_count ++;
+			$value			= (array)$value;
+			$bank_account 	= $value['card'];
+			$name			= $value['name'];
+			$identity 		= $value['identity'];
+			$result 		= $userSerivce->common_Validate($bank_account, $name, $identity);
+			$updateData = [
+					'run' 		=> 1,
+					'return'	=> $result['return'],
+					'message'	=> isset($result['data']) ? $result['data'] : '',
+			];
+			\DB::table('three_factor')->where('id',$value['id'])->update($updateData);
+			sleep(0.1);
+		}
+		echo 'Exec Count :'.$exec_count;
+		exit;
+	}
+	
+	
+	
 	public function getCode(){
 		$phone = Input::get('phone');
 		$redis = LRedis::connection ();
@@ -472,7 +599,7 @@ EOF;
 	
 	
 	
-	public function test(){
+	public function test1(){
 		
 		$needles ='123123123123';
 		 $haystack= '123123';
@@ -804,7 +931,7 @@ EOF;
     			$area[$key] = $value['cid'];
     		}
     	}
-    	$stat = array_fill(0, 7, 0);
+    	$stat = array_fill(0, 20, 0);
     	$fp = fopen('address_fix_'.__FUNCTION__.'_'.(int)(time()/100).'.sql','w');
     
     	$result = \DB::select('SELECT * FROM gzb_user_address WHERE  area_id > 3571 ORDER BY area_id  DESC');
@@ -825,6 +952,7 @@ EOF;
     	dump($stat);
     }
     
+    
     /**
      * 制作地址字典树
      * @return multitype:
@@ -837,10 +965,18 @@ EOF;
     
     	foreach ($areas as $value){
     		if($value['type'] >= 1){
+    			$value['name'] = str_replace(' ', '', $value ['name']);
     			$flect[$value['cid']] = [
     					'cup' 	=> $value['cup'],
     					'name' 	=> $value['name']
     			];
+    			
+//     			preg_replace('/\s/', '', $flect[$cup] ['name'])!= $flect[$cup] ['name'] && dump($flect[$cup] ['name']);
+    			str_replace(' ', '', $value ['name']) != $value['name']
+    			 && dump($value ['name']);
+    			
+    			
+//     			'宾  县' == $value ['name'] && dump($value ['name']);
     		}
     	}
     
@@ -848,10 +984,12 @@ EOF;
     
     	foreach ($areas as $value){
     		if($value['type'] >= 1){
+    			$value['name'] = str_replace(' ', '', $value ['name']);
     			$names = [$value['name']];
     			$cup = $value['cup'];
     			while( isset($flect[$cup] )){
-    				$names[] = $flect[$cup] ['name'];
+    				
+    				$names[] = str_replace(' ', '', $flect[$cup] ['name']) ;
     				$cup = $flect[$cup]['cup'];
     			}
     			$names 	= array_reverse($names);
@@ -934,6 +1072,8 @@ EOF;
     
     	$areas = AreaMo::orderBy('type')->get()->toArray();
     	$dics = $this->mkDic();
+    	dump($this->find($dics, '仙桃市经济技术开发区青鱼湖路28号'));
+//     	dump($dics);
     	$area_lv = [];
     	$area_id = [];
     	$area = [];
@@ -951,9 +1091,9 @@ EOF;
     	// // 		$res = $this->find($dics, $str);
     	// // 		edump($res);
     
-    	$fp = fopen('address_fix_'.__FUNCTION__.'_'.(int)(time()/100).'.sql','w');
+    	$fp = fopen('D:\sqlLog\address_fix_'.__FUNCTION__.'_'.(int)(time()/100).'.sql','w');
     	$_statistics = [ 'EPT' => 0, 'NO3' => 0 ,'UN' => 0 ];
-    	$result = \DB::select('SELECT * FROM gzb_user_address WHERE  area_id > 3571  ORDER BY area_id  DESC');
+    	$result = \DB::select('SELECT * FROM gzb_user_address WHERE  area_id = id  AND type = 1 ORDER BY area_id  DESC');
     
     	//	$result = \DB::select('SELECT * FROM gzb_user_address WHERE  area_id > 0 AND area_id < 3571 AND type = 1 LIMIT 30000');
     
@@ -963,8 +1103,13 @@ EOF;
     
     		$addr = explode(' ', $value['address']);
     		$stat[count($addr)] ++;
-    		if(count($addr) == 1){
+    		
+    		
+    		
+    		if(1 || count($addr) == 1){
     			//	lp($value['id'].'|'.$value['created_at'].'|'.$value['address']);
+    			
+    			$value['address'] = str_replace(' ', '',  $value['address']);
     			$res = $this->find($dics, $value['address']);
     			$_3_id = 0;
     			foreach ($res as $k => $v){

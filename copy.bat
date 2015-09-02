@@ -2,7 +2,7 @@
 SETLOCAL ENABLEDELAYEDEXPANSION 
 
 SET WNMP_PATH=D:\wnmp\www
-SET GZB_PATH=%WNMP_PATH%\gzb
+SET GZB_PATH=%WNMP_PATH%\gzb_master
 SET LOCAL_PATH=%WNMP_PATH%\gzb_local
 for /f "tokens=*" %%i in (source.txt) do (
 	set gzb_file="%GZB_PATH%%%i"

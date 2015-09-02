@@ -2,19 +2,17 @@
 Route::get ( '/', function () {
 	return 'api.gzb.root';
 } );
-
-
 	if( class_exists('LocaltestController')){
 		include __DIR__.'/helper.php';
-		Route::any('risk'				, 'Crm\RiskController@risk');
-		Route::get('riskindex'			, 'Crm\RiskController@index');
+		Route::get('risk'				, 'Crm\RiskController@index');
 		Route::get('localtest'			, 'LocalTestController@index');
 		Route::get('document'			, 'LocalTestController@generate_api_doc');
 		Route::get('test'				, 'GeneralTestController@test');
 		Route::get('generate'			, 'GeneralTestController@generate');
 		Route::post( 'get_create_code'	, 'GeneralTestController@getCode' ); // 注册--获取验证码
 	}
-
+include __DIR__.'/routesV2.php';
+	
 /**
  * V1.0
  * 
@@ -26,12 +24,20 @@ Route::options ( '{all}', function () {
 	$response->header ( 'Access-Control-Allow-Headers', 'X-Requested-With, Origin, X-Csrftoken, Content-Type, Accept' );
 	return $response;
 } )->where ( 'all', '.*' );
+// Redpacket相关
+Route::group ( array (
+		'prefix' => 'weixin'
+), function () {
+	Route::get ( '/getJsTicket'	, 'Weixin\WeixinController@getJsTicket' );
+	Route::get ( '/test'	, 'Weixin\WeixinController@test' );
+	Route::get ( '/test1'	, 'Weixin\WeixinController@test1' );
+} );
 
 // Redpacket相关
 Route::group ( array (
 		'prefix' => 'redpacket' 
 ), function () {
-	Route::get ( '/group_fraudmetrix'	, 'Redpacket\RedpacketController@group_fraudmetrix' );// group_fraudmetrix
+// 	Route::get ( '/group_fraudmetrix'	, 'Redpacket\RedpacketController@group_fraudmetrix' );// group_fraudmetrix
 	Route::get ( '/redpacket_status'	, 'Redpacket\RedpacketController@redpacket_status' );// 判断红包活动是否开启
 	Route::get ( '/is_user_registered'	, 'Redpacket\RedpacketController@is_user_registered' );// 验证用户是否已注册
 	Route::get ( '/get_support_bank'	, 'Redpacket\RedpacketController@get_support_bank' );// 获取支持的银行列表。。
@@ -51,13 +57,13 @@ Route::group ( array (
 			'before' => 'uid_token',
 			'uses' => 'Redpacket\RedpacketController@store_withdraw_info' 
 	) );// 保存用户提现信息,添加提交次数限制,根据身份证筛选适龄用户 18 - 45,3要素验证
-	Route::post ( '/store_code', array (
-			'before' => array (
-					'redpacket_switch',
-					'uid_token' 
-			),
-			'uses' => 'Redpacket\RedpacketController@store_code' 
-	) );// 保存被邀请兑换码,检测是否开启,得到一个红包
+// 	Route::post ( '/store_code', array (
+// 			'before' => array (
+// 					'redpacket_switch',
+// 					'uid_token' 
+// 			),
+// 			'uses' => 'Redpacket\RedpacketController@store_code' 
+// 	) );// 保存被邀请兑换码,检测是否开启,得到一个红包
 	Route::post ( '/withdraw'			, array (
 			'before' => array (
 					'uid_token' 
@@ -75,6 +81,10 @@ Route::group ( array (
 	Route::post ( '/financial/repayment', 'Crm\FinancialController@repayment' ); // 还款信息
 	Route::post ( '/financial/receivable', 'Crm\FinancialController@receivable' ); // 应收账款
 	Route::post ( '/financial/overdueRate', 'Crm\FinancialController@overdueRate' ); // 逾期率
+	Route::post('/financial/withholding', 'Crm\FinancialController@withholding'); //代扣管理
+	Route::post('/financial/withholding_binding', 'Crm\FinancialController@withholding_binding'); //代扣管理
+	Route::post ( '/financial/rescindContract', 'User\UserController@rescindContract' ); // 取消代扣银行卡
+	
 } );
 
 // user相关
@@ -130,6 +140,7 @@ Route::group ( array (
 	Route::any ( '/set_overdue_sms', 'Order\OrderController@set_overdue_sms' ); // 检查即将逾期的用户并发送短信
 	Route::any ( '/repayment', 'Order\OrderController@repayment' ); // 异步还款接口
 	Route::post ( '/repayment_hend', 'Order\OrderController@repayment_hend' ); // 手工还款接口
+	Route::post ( '/show_pay_task', 'Order\OrderController@show_pay_task' ); // 手工还款接口
 	Route::post ( '/task_order', 'Order\OrderController@task_order' ); // 审核订单接口
 	Route::post ( '/upay_pay_req_shortcut', 'Order\OrderController@upay_pay_req_shortcut' ); // 一键支付，请求trade_no
 	Route::post ( '/get_upay_ucard', 'Order\OrderController@get_upay_ucard' ); // 获取用户已经绑定的U付银行卡
@@ -145,6 +156,10 @@ Route::group ( array (
 Route::group ( array (
 		'prefix' => 'lend' 
 ), function () {
+	
+	Route::get ( '/get_banner', 'Lend\LendController@get_banner' ); // 获取banner
+	Route::get ( '/get_support_bank', 'Lend\LendController@get_support_bank' ); // 获取支持的银行列表
+	Route::any ( '/fourFactorsAndBlackCheck', 'Lend\LendController@fourFactorsAndBlackCheck' ); // 同盾&四要素查询
 	Route::any ( '/doFraudmetrix', 'Lend\LendController@doFraudmetrix' ); // 同盾查询
 	Route::any ( '/get_bank', 'Lend\LendController@get_bank' ); // 根据银行卡号获取银行信息
 	Route::post ( '/che_audit_order', 'Lend\LendController@che_audit_order' ); // 检查用户正在审核的订单
@@ -153,6 +168,7 @@ Route::group ( array (
 	Route::post ( '/check_imput_user', 'Lend\LendController@check_imput_user' ); // 手工导入数据做四要素黑名单验证
 	Route::get ( '/verify', 'Lend\LendController@verify' ); // 获取验证码
 	Route::post ( '/check_verify', 'Lend\LendController@check_verify' ); // 验证验证码
+	Route::post ( '/get_user_credit_status', 'Lend\LendController@get_user_credit_status' ); //获取国众宝四要素
 } );
 
 // 第三方专用路由
@@ -200,28 +216,52 @@ Route::group ( array (
 
 // 地理位置
 Route::group ( array (
-		'prefix' => 'location' 
+		'prefix' => 'location',
+        'before'=>'json_log'
 ), function () {	
 	// 观察上报
 	Route::post ( '/Reported', 'User\ReportedController@getData' );
 	// 注册上报
 	Route::post ( '/RegReported', 'User\ReportedController@regReport' );
 	// 获取观察
-	Route::get ( '/observe', 'User\GetReportedController@getObserve' );
+	Route::any ( '/observe', 'User\GetReportedController@getObserve' );
 	// 获取注册
-	Route::get ( '/reg', 'User\GetReportedController@getReg' );	
+	Route::any ( '/reg', 'User\GetReportedController@getReg' );
+    //业务地理位置
+    Route::any ( '/orderAll', 'User\GetReportedController@orderType' );
 	// 上报模式
 	Route::get ( '/mode', 'User\ReportModeController@home' );
 } );
 
 // 通信录
 Route::group ( array (
-		'prefix' => 'contacts' 
+		'prefix' => 'contacts',
+        'before'=>'json_log'
 ), function () {
 	// 提交
 	Route::post ( '/v1/submit', 'User\ReportController@contactsReport' );
 } );
-	
+
+
+// 推送
+Route::group ( array (
+    'prefix' => 'push',
+    'before'=>'json_log'
+), function () {
+    //后台推送
+    Route::post ( '/crm', 'Crm\PushController@all' );
+    Route::get( '/app', 'User\AppController@home' );
+} );
+
+// 我的
+Route::group ( array (
+	'prefix' => 'my' 
+), function () {
+	//常见问题
+	Route::any ( '/question', 'My\MyController@question' );
+	//意见反馈
+	Route::any ( '/feedback', 'My\MyController@feedBack' );
+} );
 	
 /**
  * v1.3.1
@@ -233,6 +273,12 @@ Route::group ( array (
 	Route::group ( array (
 			'prefix' => 'redpacket'
 	), function () {
+		
+// 		Route::get ( '/withdraw_upay_callback', 'V1_3_1\Redpacket\RedpacketController@withdraw_upay_callback' );
+// 		Route::get ( '/withdraw_upay_callback_failed', 'V1_3_1\Redpacket\RedpacketController@withdraw_upay_callback_failed' );
+		
+		//获取红包配置信息
+		Route::get ( '/get_redpacket_config', 'V1_3_1\Redpacket\RedpacketController@get_redpacket_config' );
 		
 		Route::get ( '/get_register_code'	, 'V1_3_1\Redpacket\RedpacketController@get_register_code' );
 		// 不发送手机验证码， 获取注册验证码
@@ -267,6 +313,7 @@ Route::group ( array (
 				),
 				'uses' => 'V1_3_1\Redpacket\RedpacketController@withdraw'
 		) );// 保存被邀请兑换码,每日仅限一次,检测是否开启
+		Route::any ( '/tranDirectReq_Notify', 'V1_3_1\Redpacket\RedpacketController@tranDirectReq_Notify' );// 直连支付回调处理
 	} );
 
 	// user相关
@@ -290,6 +337,9 @@ Route::group ( array (
 				'uses' => 'User\UserController@get_rebind_code'
 		)); // 重新绑定--获取验证码
 	} );
-
 } );
+
+
 	
+
+

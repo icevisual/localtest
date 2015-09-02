@@ -227,7 +227,7 @@ class LocalTestController extends \BaseController
     			'Api'		=>'http://api.guozhongbao.com',
     			'Stage Api'	=>'http://stage.api.guozhongbao.com',
     	);
-    	
+    	$todayReqF = [];
     	$routes_select = array();
     	$all_params = array();
     	foreach ($routes as  $v){
@@ -265,12 +265,12 @@ class LocalTestController extends \BaseController
     		isset($data['params']) && is_array($data['params']) && $all_params += $data['params'];
     		$data &&($routes_select[] = $data ) 
     		&& isset($todayReq[$data['uri']] ) 
-    			&& $todayReq[$data['uri']] = count($routes_select) - 1;
+    			&& $todayReqF[$data['uri']] = count($routes_select) - 1;
     	}
     	
     	//高频度置前
     	$res = [];
-    	foreach ($todayReq as $k => $v){
+    	foreach ($todayReqF as $k => $v){
     		$add = $routes_select[$v];
 			array_unshift($res,$add);
 			unset($routes_select[$v]);

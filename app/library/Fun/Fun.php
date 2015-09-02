@@ -9,6 +9,109 @@ namespace Lib\Fun;
 use Illuminate\Mail\Message;
 
 class Fun {
+	
+	/**
+	 * 生成等比缩略图
+	 * @param unknown $imgPath
+	 * 	图片全路径
+	 * @param number $maxSize
+	 * 	最大尺寸
+	 * @param string $savePath
+	 * 	缩略图保存全路径
+	 * @param string $cover
+	 * 	是否覆盖
+	 * @return boolean|Ambigous <string, unknown>
+	 */
+	public static function thumb($imgPath,$maxSize = 80,$savePath = '',$cover = false){
+		if(file_exists($imgPath)){
+			
+			
+			$pathinfo = pathinfo($imgPath);
+			$path = $pathinfo['dirname'].DIRECTORY_SEPARATOR.
+			$pathinfo['filename']."_{$maxSize}.".$pathinfo['extension'];
+			$path = $savePath ? $savePath : $path;
+			if(!$cover && file_exists($path)){
+				return $path;
+			}
+			
+			$img = \Image::make($imgPath);
+			$width = $img->width();
+			$height = $img->height();
+			
+			if($maxSize > max([$width,$height])) return false;
+			$max = $maxSize;
+			if($width > $height){
+				$height = intval($height * $max / $width ) ;
+				$width  = $max;
+			}else{
+				$width = intval($width * $max / $height ) ;
+				$height  = $max;
+			}
+			$img->resize($width, $height);
+			
+			$img->save($path);
+			return $path;
+		}
+		return false;
+	}
+	
+	
+	
+	/**
+	 * 获取文件类型
+	 * @param unknown $filename
+	 * @return string
+	 */
+	public static function file_type($filename) {
+		$file = fopen ( $filename, "rb" );
+		$bin = fread ( $file, 2 ); // 只读2字节
+		fclose ( $file );
+		$strInfo = @unpack ( "C2chars", $bin );
+		$typeCode = intval ( $strInfo ['chars1'] . $strInfo ['chars2'] );
+		$fileType = '';
+		switch ($typeCode) {
+			case 6063 :
+				$fileType = 'txt';
+				break;
+			case 7790 :
+				$fileType = 'exe';
+				break;
+			case 7784 :
+				$fileType = 'midi';
+				break;
+			case 8297 :
+				$fileType = 'rar';
+				break;
+			case 8075 :
+				$fileType = 'zip';
+				break;
+			case 255216 :
+				$fileType = 'jpg';
+				break;
+			case 7173 :
+				$fileType = 'gif';
+				break;
+			case 6677 :
+				$fileType = 'bmp';
+				break;
+			case 13780 :
+				$fileType = 'png';
+				break;
+			default :
+				$fileType = 'unknown: ' . $typeCode;
+		}
+		// Fix
+		if ($strInfo ['chars1'] == '-1' and $strInfo ['chars2'] == '-40')
+			return 'jpg';
+		if ($strInfo ['chars1'] == '-119' and $strInfo ['chars2'] == '80')
+			return 'png';
+		
+		return $fileType;
+	}
+	
+	
+	
+	
 	/**
 	 * 生成随机字符串
 	 *
@@ -39,18 +142,6 @@ class Fun {
 		return $password;
 	}
 	public static function returnLang($key) {
-	}
-	
-	public static function getIP() {
-		if (getenv ( "HTTP_CLIENT_IP" ))
-			$ip = getenv ( "HTTP_CLIENT_IP" );
-		else if (getenv ( "HTTP_X_FORWARDED_FOR" ))
-			$ip = getenv ( "HTTP_X_FORWARDED_FOR" );
-		else if (getenv ( "REMOTE_ADDR" ))
-			$ip = getenv ( "REMOTE_ADDR" );
-		else
-			$ip = "Unknow";
-		return $ip;
 	}
 	
 	/**
@@ -92,29 +183,55 @@ class Fun {
 	/**
 	 * 返回json
 	 *
-	 * @param string $data        	
+	 * @param string $data
 	 */
 	public static function msg($status, $message = null, $data = array()) {
 		\Ser\LogService::record ( "ReqLogs", array (
 				'Method' => \Request::method (),
 				'Input' => \Request::all (),
 				'Url' => \Request::url (),
-				'func_num_args' => func_get_args () 
+				'func_num_args' => func_get_args ()
 		), 'logs' );
+		self::fireCallback(get_defined_vars());
 		$array = array (
 				'status' => $status,
 				'message' => $message,
-				'data' => $data 
-		);
+				'data' => $data
+		); 
 		header ( "Content-type: application/json" );
 		exit ( json_encode ( $array ) );
+	}
+	
+	/**
+	 * 设置msg回调
+	 * @param string $callback
+	 * @return multitype:string
+	 */
+	public static function callback($callback = NULL) {
+		static $_callback  = [];
+		if(is_callable($callback)){
+			$_callback[] = $callback;
+		}
+		return $_callback;
+	}
+	
+	/**
+	 * 触发msg回调
+	 * @param unknown $context
+	 */
+	public static function fireCallback($context) {
+		$_callback = self::callback();
+		foreach ($_callback as $callback){
+			$result = call_user_func_array($callback, array($context));
+			if($result === false) break;
+		}
 	}
 	
 	/**
 	 * 检查参数是否为空
 	 */
 	public static function isEmpty($k, $kname) {
-		if (empty ( $k ) && $k != "0" && $k != "") {
+		if (empty ( $k ) && $k != "0") {
 			self::msg ( 202, '嘿嘿，' . $kname . '没填' );
 		} else {
 			return true;
