@@ -24,39 +24,135 @@ class Fun {
 	 */
 	public static function thumb($imgPath,$maxSize = 80,$savePath = '',$cover = false){
 		if(file_exists($imgPath)){
-			
-			
-			$pathinfo = pathinfo($imgPath);
-			$path = $pathinfo['dirname'].DIRECTORY_SEPARATOR.
-			$pathinfo['filename']."_{$maxSize}.".$pathinfo['extension'];
-			$path = $savePath ? $savePath : $path;
-			if(!$cover && file_exists($path)){
-				return $path;
+			try {
+				$pathinfo = pathinfo($imgPath);
+				$path = $pathinfo['dirname'].DIRECTORY_SEPARATOR.
+				$pathinfo['filename']."_{$maxSize}.".$pathinfo['extension'];
+				$path = $savePath ? $savePath : $path;
+				if(!$cover && file_exists($path)){
+					return $path;
+				}
+				self::resize($imgPath, $path, $maxSize);
+			}catch (\Exception $e){
+				return false;
 			}
-			
-			$img = \Image::make($imgPath);
-			$width = $img->width();
-			$height = $img->height();
-			
-			if($maxSize > max([$width,$height])) return false;
-			$max = $maxSize;
-			if($width > $height){
-				$height = intval($height * $max / $width ) ;
-				$width  = $max;
-			}else{
-				$width = intval($width * $max / $height ) ;
-				$height  = $max;
-			}
-			$img->resize($width, $height);
-			
-			$img->save($path);
 			return $path;
 		}
 		return false;
 	}
 	
+	/**
+	 * 等比缩放图片
+	 * @param unknown $path
+	 * @param unknown $dst_path
+	 * @param unknown $max
+	 * @throws \Exception
+	 */
+	public static function resize($path ,$dst_path,$max)
+	{
+		$info = @getimagesize($path);
 	
+		if ($info === false) {
+			throw new \Exception(
+					"Unable to read image from file ({$path})."
+			);
+		}
 	
+		// define core
+		switch ($info[2]) {
+			case IMAGETYPE_PNG:
+				$core = imagecreatefrompng($path);
+				break;
+			case IMAGETYPE_JPEG:
+				$core = imagecreatefromjpeg($path);
+				break;
+			default:
+				throw new \Exception(
+				"Unable to read image type. GD driver is only able to decode JPG, PNG or GIF files."
+						);
+		}
+		$resource = & $core;
+		
+		$width = imagesx($resource);
+		$height = imagesy($resource);
+		if($width > $height){//等比尺寸
+			$dst_h = intval($height * $max / $width ) ;
+			$dst_w  = $max;
+		}else{
+			$dst_w = intval($width * $max / $height ) ;
+			$dst_h  = $max;
+		}
+		// new canvas
+		$canvas = imagecreatetruecolor($width, $height);
+		
+		// fill with transparent color
+		imagealphablending($canvas, false);
+		$transparent = imagecolorallocatealpha($canvas, 255, 255, 255, 127);
+		imagefilledrectangle($canvas, 0, 0, $width, $height, $transparent);
+		imagecolortransparent($canvas, $transparent);
+		imagealphablending($canvas, true);
+		
+		// copy original
+		imagecopy($canvas, $resource, 0, 0, 0, 0, $width, $height);
+		imagedestroy($resource);
+		
+		$resource = $canvas;
+	
+		// create new image
+		$modified = imagecreatetruecolor($dst_w, $dst_h);
+		
+		// preserve transparency
+		$transIndex = imagecolortransparent($resource);
+		
+		if ($transIndex != -1) {
+			$rgba = imagecolorsforindex($modified, $transIndex);
+			$transColor = imagecolorallocatealpha($modified, $rgba['red'], $rgba['green'], $rgba['blue'], 127);
+			imagefill($modified, 0, 0, $transColor);
+			imagecolortransparent($modified, $transColor);
+		} else {
+			imagealphablending($modified, false);
+			imagesavealpha($modified, true);
+		}
+		
+		// copy content from resource
+		$result = imagecopyresampled($modified,$resource,0,0,0,0,$dst_w,$dst_h,$width,$height);
+		$resource = $modified;
+		
+		switch (strtolower(pathinfo($path, PATHINFO_EXTENSION))) {
+			case 'png':
+			case 'image/png':
+			case 'image/x-png':
+				ob_start();
+				imagealphablending($resource, false);
+				imagesavealpha($resource, true);
+				imagepng($resource, null, -1);
+				$mime = image_type_to_mime_type(IMAGETYPE_PNG);
+				$buffer = ob_get_contents();
+				ob_end_clean();
+				break;
+		
+			case 'jpg':
+			case 'jpeg':
+			case 'image/jpg':
+			case 'image/jpeg':
+			case 'image/pjpeg':
+				ob_start();
+				imagejpeg($resource, null,100);
+				$mime = image_type_to_mime_type(IMAGETYPE_JPEG);
+				$buffer = ob_get_contents();
+				ob_end_clean();
+				break;
+			default:
+				throw new \Exception("Encoding format is not supported.");
+		}
+		$saved = @file_put_contents($dst_path, $buffer);
+		if ($saved === false) {
+			throw new \Exception(
+					"Can't write image data to path ({$dst_path})"
+			);
+		}
+	}
+
 	/**
 	 * 获取文件类型
 	 * @param unknown $filename
@@ -205,12 +301,15 @@ class Fun {
 	/**
 	 * 设置msg回调
 	 * @param string $callback
-	 * @return multitype:string
+	 * 	回调方法
+	 * @param array $params
+	 * 	回调参数
+	 * @return multitype:multitype:string unknown
 	 */
-	public static function callback($callback = NULL) {
+	public static function callback($callback = NULL,array $params = array()) {
 		static $_callback  = [];
 		if(is_callable($callback)){
-			$_callback[] = $callback;
+			$_callback[] =['func'=>$callback,'param'=>$params] ;
 		}
 		return $_callback;
 	}
@@ -222,7 +321,7 @@ class Fun {
 	public static function fireCallback($context) {
 		$_callback = self::callback();
 		foreach ($_callback as $callback){
-			$result = call_user_func_array($callback, array($context));
+			$result = call_user_func_array($callback['func'], array($context,$callback['param']));
 			if($result === false) break;
 		}
 	}

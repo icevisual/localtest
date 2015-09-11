@@ -291,6 +291,7 @@
 			var base = $('#baseuri-hidden').val();
 			if(param) param = param.substring(1);
 			if(param) decomposeVariables(param);
+
 			$.ajax({
 	            type: type,
 	            url: base + url,
@@ -313,6 +314,7 @@
 					alert('ERROR');
                 }
 	         });
+	         
 		}
 		$('#get_sub').click(function(){
 			execSubmit('get');

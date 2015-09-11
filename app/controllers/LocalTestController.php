@@ -54,6 +54,10 @@ class LocalTestController extends \BaseController
 			if($r){
 				$params[$matchs[1]] = true;
 			}
+			$r = preg_match('/\$_(?:POST|GET)\s*\[[\'\"]([\w\d_]*)[\'\"]\]/', $v,$matchs);
+			if($r){
+				$params[$matchs[1]] = true;
+			}	
 		});
 		return $params;
 	}

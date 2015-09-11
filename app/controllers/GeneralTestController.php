@@ -18,14 +18,171 @@ use Intervention\Image\Facades\Image;
 class GeneralTestController extends \BaseController
 {
 	
+	function curl_multi_request ($query_arr,$data,$method = 'POST') {
+		$ch = curl_multi_init();
+		$count = count($query_arr);
+		$ch_arr = array();
+		for ($i = 0; $i < $count; $i++) {
+			$query_string = $query_arr[$i];
+			$ch_arr[$i] = curl_init($query_string);
+			curl_setopt($ch_arr[$i], CURLOPT_RETURNTRANSFER, true);
+			
+			curl_setopt ( $ch_arr[$i], CURLOPT_POST, 1);
+			curl_setopt ( $ch_arr[$i], CURLOPT_POSTFIELDS, $data ); // post 提交方式
+			
+			
+			curl_multi_add_handle($ch, $ch_arr[$i]);
+		}
+		$running = null;
+		do {
+			curl_multi_exec($ch, $running);
+		} while ($running > 0);
+		for ($i = 0; $i < $count; $i++) {
+			$results[$i] = curl_multi_getcontent($ch_arr[$i]);
+			curl_multi_remove_handle($ch, $ch_arr[$i]);
+		}
+		curl_multi_close($ch);
+		return $results;
+	}
+	
+	
 	public function test(){
 		
+		$uid = 165682;
+// 		2016-03-09 00:00:00
+// 		2016-02-08 00:00:00
+// 		2016-01-09 00:00:00
+// 		2015-12-10 00:00:00
+// 		2015-11-10 00:00:00
+// 		2015-10-11 00:00:00
+		$res = \Order\Pay::getLastPay($uid,'2015-11-10');
+		edump($res);
+		exit;
+		
+		$uid = '165705';
+		$marketingService = new \Ser\VersionTwo\Marketing\MarketingService();
+		$res = $marketingService->get_wallet_info($uid);
+		dump($res);
+		exit;
+		
+		
+		$OrderService = new Ser\VersionTwo\Order\OrderService() ;
+		$res = $OrderService ->getPayListAllUser();
+		dump($res);
+		exit;
+		$uid = '165682';
+		$orderid = '1441872092080051';
+		$type  = '1'; 
+		$pay_at = '2015-09-10 00:00:00';
+		$config = [
+				1 => [\Ser\Order\OrderService::class,'show_pay_task'],
+				2 => [\Ser\VersionTwo\Order\OrderService::class,'show_pay_task_v2_0'],
+		];
+		$order = \Order\Main::where('orderid',$orderid)->first();
+		return call_user_func_array(
+				[new $config[$order['order_verison']][0] ,$config[$order['order_verison']][1]],
+				[$uid, $orderid, $type, $pay_at]);
 		
 		
 		
+		
+		exit;
+		//165682 1441852794861894	144185453176846
+		$data = [
+				'adssd' => '123',
+				'asd' => 'asd',
+				'asds' => '123',
+		];
+		
+		edump(serialize($data));
+		$OrderService =  new \Ser\VersionTwo\Order\OrderService();
+		$OrderService->repayment('asd');
+		exit;
+		$uid 	='165682';
+		$orderid ='1441852794861894';
+		$paytaskid ='144185453176846';
+		\Marketing\RepaymentCash::doDeductibleSuccess($uid, $orderid, $paytaskid);
+		exit;
+		\DB::beginTransaction ();
+		$res ='';
+		try {
+			$uid 		= '165682';
+			$gain_type 	= '2';
+			$cash_type 	= '1';
+// 			$res = \Marketing\RepaymentCoupon::gain(165682, 1, [2000]);
+			$res = \Marketing\RepaymentCash::gain($uid, $gain_type, $cash_type);
+			$rrr = \Marketing\RepaymentCash::get()->toArray();
+			dump($rrr);
+		}catch (\Exception $e){
+			dump($e->getMessage());
+		}
+		exit;
+		\DB::commit ();
+		dump($res);
+		exit;
+		$type = 1;
+		$res = PointsV2::get_cash_by_type($type);
+		$res = PointsV2::get_coupon_by_amount(2000);
+		
+		edump($res);
+		
+		$data = [
+				'uid'=>476,
+				'token'=>'ujQG8n50R8',
+				'credit'=>1000,
+				'periods'=>1,
+		];
+		$res = $this->curl_multi_request([
+				'http://api.gzb.renrenfenqi.com/order/put_credit',
+				'http://api.gzb.renrenfenqi.com/order/put_credit',
+				'http://api.gzb.renrenfenqi.com/order/put_credit',
+				'http://api.gzb.renrenfenqi.com/order/put_credit',
+				'http://api.gzb.renrenfenqi.com/order/put_credit',
+				'http://api.gzb.renrenfenqi.com/order/put_credit',
+				'http://api.gzb.renrenfenqi.com/order/put_credit',
+				'http://api.gzb.renrenfenqi.com/order/put_credit',
+				'http://api.gzb.renrenfenqi.com/order/put_credit',
+				'http://api.gzb.renrenfenqi.com/order/put_credit',
+				'http://api.gzb.renrenfenqi.com/order/put_credit',
+				'http://api.gzb.renrenfenqi.com/order/put_credit',
+				'http://api.gzb.renrenfenqi.com/order/put_credit',
+				'http://api.gzb.renrenfenqi.com/order/put_credit',
+				'http://api.gzb.renrenfenqi.com/order/put_credit',
+		],$data);
+		
+		foreach ($res as $v){
+			echo $v.'<br/>';
+		}
+		exit;
+		$data = [
+				'uid'=>476,
+				'token'=>'ujQG8n50R8',
+				'credit'=>1000,
+				'periods'=>1,
+		];
+		
+		for ($i = 0 ; $i < 3 ; $i ++ ){
+			$result[] = \Lib\Fun\Post::post('http://api.gzb.renrenfenqi.com/order/put_credit',$data);
+			
+		}
+		dump($result);
+		exit;
+		
+		
+		
+		$file = base_path().'\public\eye.jpg';
+		try {
+			$res = Fun::thumb($file,216,'',true);
+			dump($res);
+		}catch (\Exception $e){
+			dump($e->getMessage());
+		}
+		
+		
+		exit();
 		
 // 		$this->four();
-		$this->one();
+// 		$this->one();
 		
 		
 		
@@ -38,29 +195,7 @@ class GeneralTestController extends \BaseController
 		edump(json_decode(stripcslashes($str),true));
 		$res = json_decode_recursive();
 		edump($res);
-		
-		set_time_limit(0);
-		$allData =  \DB::table('three_factor')->where('run',0)->get();
-		$userSerivce = new \Ser\User\UserService();
-		$exec_count = 0;
-		foreach ($allData as $value){
-			$exec_count ++;
-			$value			= (array)$value;
-			$bank_account 	= $value['card'];
-			$name			= $value['name'];
-			$identity 		= $value['identity'];
-			$result 		= $userSerivce->common_Validate($bank_account, $name, $identity);
-			
-			$updateData = [
-					'run' 		=> 1,
-					'return'	=> $result['return'],
-					'message'	=> $result['data'],
-			];
-			\DB::table('three_factor')->where('id',$value['id'])->update($updateData);
-			sleep(0.1);
-		}
-		echo 'Exec Count :'.$exec_count;
-		exit;
+	
 		
 		$RedpacketService = new \Ser\V1_3_1\Redpacket\RedpacketService();
 		$res = $RedpacketService->verity_process(341);

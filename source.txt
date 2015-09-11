@@ -2,6 +2,5 @@
 \app\routes.php
 \app\controllers\GeneralTestController.php
 \app\controllers\LocalTestController.php
-\app\controllers\GenerateCodeController.php
 \app\views\localtest
 \app\library\Fun\Fun.php
