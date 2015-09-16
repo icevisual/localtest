@@ -18,36 +18,21 @@ use Intervention\Image\Facades\Image;
 class GeneralTestController extends \BaseController
 {
 	
-	function curl_multi_request ($query_arr,$data,$method = 'POST') {
-		$ch = curl_multi_init();
-		$count = count($query_arr);
-		$ch_arr = array();
-		for ($i = 0; $i < $count; $i++) {
-			$query_string = $query_arr[$i];
-			$ch_arr[$i] = curl_init($query_string);
-			curl_setopt($ch_arr[$i], CURLOPT_RETURNTRANSFER, true);
-			
-			curl_setopt ( $ch_arr[$i], CURLOPT_POST, 1);
-			curl_setopt ( $ch_arr[$i], CURLOPT_POSTFIELDS, $data ); // post 提交方式
-			
-			
-			curl_multi_add_handle($ch, $ch_arr[$i]);
-		}
-		$running = null;
-		do {
-			curl_multi_exec($ch, $running);
-		} while ($running > 0);
-		for ($i = 0; $i < $count; $i++) {
-			$results[$i] = curl_multi_getcontent($ch_arr[$i]);
-			curl_multi_remove_handle($ch, $ch_arr[$i]);
-		}
-		curl_multi_close($ch);
-		return $results;
-	}
-	
-	
 	public function test(){
 		
+		
+		
+		
+// 		$this->one();
+		exit;
+		
+		$OrderService = new Ser\VersionTwo\Order\OrderService() ;
+		//$res = $OrderService ->getPayListAllUser();
+		$uid = '165682';
+		$res = $OrderService ->withholding_binding_after_pay($uid);
+		//165682
+		dump($res);
+		exit;
 		$uid = 165682;
 // 		2016-03-09 00:00:00
 // 		2016-02-08 00:00:00
@@ -55,7 +40,8 @@ class GeneralTestController extends \BaseController
 // 		2015-12-10 00:00:00
 // 		2015-11-10 00:00:00
 // 		2015-10-11 00:00:00
-		$res = \Order\Pay::getLastPay($uid,'2015-11-10');
+// 		$res = \Order\Pay::getLastPay($uid,'2015-11-10');
+		$res = \Order\Pay::getPayListAllUser(date ( 'Y-m-d' ),0);
 		edump($res);
 		exit;
 		
@@ -66,10 +52,7 @@ class GeneralTestController extends \BaseController
 		exit;
 		
 		
-		$OrderService = new Ser\VersionTwo\Order\OrderService() ;
-		$res = $OrderService ->getPayListAllUser();
-		dump($res);
-		exit;
+		
 		$uid = '165682';
 		$orderid = '1441872092080051';
 		$type  = '1'; 
@@ -132,7 +115,7 @@ class GeneralTestController extends \BaseController
 				'credit'=>1000,
 				'periods'=>1,
 		];
-		$res = $this->curl_multi_request([
+		$res = curl_multi_request([
 				'http://api.gzb.renrenfenqi.com/order/put_credit',
 				'http://api.gzb.renrenfenqi.com/order/put_credit',
 				'http://api.gzb.renrenfenqi.com/order/put_credit',
@@ -1207,7 +1190,7 @@ EOF;
     
     	$areas = AreaMo::orderBy('type')->get()->toArray();
     	$dics = $this->mkDic();
-    	dump($this->find($dics, '仙桃市经济技术开发区青鱼湖路28号'));
+//     	dump($this->find($dics, '仙桃市经济技术开发区青鱼湖路28号'));
 //     	dump($dics);
     	$area_lv = [];
     	$area_id = [];
@@ -1226,7 +1209,7 @@ EOF;
     	// // 		$res = $this->find($dics, $str);
     	// // 		edump($res);
     
-    	$fp = fopen('D:\sqlLog\address_fix_'.__FUNCTION__.'_'.(int)(time()/100).'.sql','w');
+    	$fp = fopen('D:\sqlLog\test\address_fix_'.__FUNCTION__.'_'.(int)(time()/100).'.sql','w');
     	$_statistics = [ 'EPT' => 0, 'NO3' => 0 ,'UN' => 0 ];
     	$result = \DB::select('SELECT * FROM gzb_user_address WHERE  area_id = id  AND type = 1 ORDER BY area_id  DESC');
     

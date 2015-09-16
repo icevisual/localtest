@@ -365,7 +365,9 @@ if(! function_exists('getReturnInLogFile')){
 							if(is_array( $ret['data']) ){
 								
 								$returns[$matchs['Url']]['Return'][ $ret['status']] ['data']
-								= array_filter($returns[$matchs['Url']]['Return'][$ret['status']]['data'])
+								= array_filter($returns[$matchs['Url']]['Return'][$ret['status']]['data'],function($v){
+									
+								})
 								+ $ret['data'];
 								ksort($returns[$matchs['Url']]['Return'][ $ret['status']] ['data']);
 							}
@@ -746,6 +748,35 @@ if(!function_exists('curl')) {
 			return false;
 		}
 	}
+	
+	
+	function curl_multi_request ($query_arr,$data,$method = 'POST') {
+		$ch = curl_multi_init();
+		$count = count($query_arr);
+		$ch_arr = array();
+		for ($i = 0; $i < $count; $i++) {
+			$query_string = $query_arr[$i];
+			$ch_arr[$i] = curl_init($query_string);
+			curl_setopt($ch_arr[$i], CURLOPT_RETURNTRANSFER, true);
+				
+			curl_setopt ( $ch_arr[$i], CURLOPT_POST, 1);
+			curl_setopt ( $ch_arr[$i], CURLOPT_POSTFIELDS, $data ); // post 提交方式
+				
+				
+			curl_multi_add_handle($ch, $ch_arr[$i]);
+		}
+		$running = null;
+		do {
+			curl_multi_exec($ch, $running);
+		} while ($running > 0);
+		for ($i = 0; $i < $count; $i++) {
+			$results[$i] = curl_multi_getcontent($ch_arr[$i]);
+			curl_multi_remove_handle($ch, $ch_arr[$i]);
+		}
+		curl_multi_close($ch);
+		return $results;
+	}
+	
 }
 
 if (! function_exists ( 'randStr' )) {

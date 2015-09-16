@@ -131,17 +131,16 @@ Route::group ( array (
 		'prefix' => 'order' 
 ), function () {
 	Route::post ( '/put_credit', 'Order\OrderController@put_credit' ); // 订单提交
-	Route::post ( '/get_pay_task', 'Order\OrderController@get_pay_task' ); // 请求还款流水
+	Route::post ( '/get_pay_task', 'VersionTwo\Order\OrderController@get_pay_task' ); // 请求还款流水
 	Route::post ( '/get_orderlist', 'Order\OrderController@get_orderlist' ); // 获取用户订单列表
 	Route::post ( '/getPayList', 'Order\OrderController@getPayList' ); // 请求当月还款列表
-	Route::any ( '/repayment', 'Order\OrderController@repayment' ); // 异步还款接口
+	Route::any ( '/repayment', 'VersionTwo\Order\OrderController@repayment' ); // 异步还款接口
 	Route::any ( '/check_pay_task', 'Order\OrderController@check_pay_task' ); // 按时检查用户是否逾期
-	Route::any ( '/bank_withholding', 'Order\OrderController@bank_withholding' ); // 银行代扣业务
+	Route::any ( '/bank_withholding', 'VersionTwo\Order\OrderController@bank_withholding' ); // 银行代扣业务
 	Route::any ( '/set_overdue_sms', 'Order\OrderController@set_overdue_sms' ); // 检查即将逾期的用户并发送短信
-	Route::any ( '/repayment', 'Order\OrderController@repayment' ); // 异步还款接口
 	Route::post ( '/repayment_hend', 'Order\OrderController@repayment_hend' ); // 手工还款接口
-	Route::post ( '/show_pay_task', 'Order\OrderController@show_pay_task' ); // 手工还款接口
-	Route::post ( '/task_order', 'Order\OrderController@task_order' ); // 审核订单接口
+	Route::post ( '/show_pay_task', 'VersionTwo\Order\OrderController@show_pay_task' ); // 手工还款接口
+	Route::post ( '/task_order', 'VersionTwo\Order\OrderController@task_order' ); // 审核订单接口
 	Route::post ( '/upay_pay_req_shortcut', 'Order\OrderController@upay_pay_req_shortcut' ); // 一键支付，请求trade_no
 	Route::post ( '/get_upay_ucard', 'Order\OrderController@get_upay_ucard' ); // 获取用户已经绑定的U付银行卡
 	Route::post ( '/req_smsverify_shortcut', 'Order\OrderController@req_smsverify_shortcut' ); // 发送协议短信
