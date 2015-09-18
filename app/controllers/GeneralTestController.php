@@ -18,11 +18,57 @@ use Intervention\Image\Facades\Image;
 class GeneralTestController extends \BaseController
 {
 	
+	
+	public function returnDate(){
+		
+		
+		exit(json_encode(['data'=>'ok']));
+	}
+	
+	
 	public function test(){
+		$data = '山东科技将sdfsdf1243123123山东';
+		$AESMcrypt = new \AESTool();
+		$AESMcrypt->setSecretKey('ads');
+			$res = $AESMcrypt->encrypt($data);
+			$res = $AESMcrypt->decrypt($res);
+			
+			if($res != $data){
+				edump($k);
+			}
+		
+		exit;
+		dump($res);
+		
+		exit;
+		
+		$RsaClass = new \RsaTool(storage_path().'/A');	
+// 		$RsaClass->createKey();
+
 		
 		
+		$data = 'AAAAAAAAAAAAAAAAA';
+// 		$data = sha1($data);
+		dump($data);
+		$pen_data =  $RsaClass->pubEncrypt($data);
+		dump($pen_data);
+		$de =  $RsaClass->privDecrypt($pen_data);
+		dump($de);
+		dump($data);
+		$pen_data =  $RsaClass->privEncrypt($data);
+		dump($pen_data);
+		$de =  $RsaClass->pubDecrypt($pen_data);
+		dump($de);
 		
-		
+		exit;
+		$r = openssl_pkey_new(array(
+			'private_key_bits' => 1024,
+			'private_key_type' => OPENSSL_KEYTYPE_RSA,
+		));
+		openssl_pkey_export ( $r, $privKey );
+		$rp = openssl_pkey_get_details ( $r );
+		var_dump($rp);
+		echo $privKey;
 // 		$this->one();
 		exit;
 		
