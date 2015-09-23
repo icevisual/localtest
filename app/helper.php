@@ -1,6 +1,29 @@
 <?php
 
 
+class CommonTool{
+	
+	
+	/**
+	 * Create A Random String WIth A Given Length
+	 * @param number $length
+	 * @return string
+	 */
+	public static function createNonceStr($length = 16) {
+		$chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+		$str = "";
+		for($i = 0; $i < $length; $i ++) {
+			$str .= substr ( $chars, mt_rand ( 0, strlen ( $chars ) - 1 ), 1 );
+		}
+		return $str;
+	}
+	
+	
+// 	public static function 
+	
+	
+}
+
 class AESTool{
 
 	/**
@@ -35,8 +58,7 @@ class AESTool{
 	}
 	
 	public function setSecretKey($key){
-//16, 24 or 32 
-		$this->secretKey = $key ;
+		$this->secretKey = md5($key) ;
 	}
 	
 	public function getSecretKey(){
@@ -87,29 +109,96 @@ class AESTool{
  * | Here is where you can register all of the Helpers for an application.
  * |
  */
+
+
 class RsaTool {
+	
+	/**
+	 * 私钥
+	 * @var unknown
+	 */
 	private $_privKey;
+	
+	/**
+	 * 公钥
+	 * @var unknown
+	 */
 	private $_pubKey;
-	private $_keyPath;
-	public function __construct($path) {
-		if (empty ( $path ) || ! is_dir ( $path )) {
-			throw new Exception ( 'Must set the keys save path' );
+	
+	private $_client_pubKey;
+	
+	private $_privPath;
+	private $_pubPath;
+	
+	
+	/**
+	 * 
+	 * @param unknown $path1
+	 * 	privKeyPath Or KeyBasePath
+	 * @param string $path2
+	 * 	pubKeyPath 
+	 * @throws \Exception
+	 */
+	public function __construct($path1,$path2 = '' ) {
+		if (empty ( $path1 ) ) {
+			throw new \Exception ( 'Key Set Path Is Required' );
 		}
-		$this->_keyPath = $path;
+		if( is_dir ( $path1 )){
+			$this->_privPath = $path1. DIRECTORY_SEPARATOR . 'priv.pem';
+			$this->_pubPath = $path1. DIRECTORY_SEPARATOR . 'pub.pem';
+		}else if ( is_file( $path1 ) && is_file( $path2 ) ){
+			$this->_privPath = $path1;
+			$this->_pubPath = $path2;
+		}else{
+			throw new \Exception ( 'Valid Path Or File Is Required' );
+		}
 	}
+
+	/**
+	 * Create New RAS Keys
+	 * @return multitype:unknown
+	 */
 	public function createKey() {
+		
 		$r = openssl_pkey_new ([
 				'private_key_bits' => 1024,
 				'private_key_type' => OPENSSL_KEYTYPE_RSA,
 		]);
 		openssl_pkey_export ( $r, $privKey );
-		file_put_contents ( $this->_keyPath . DIRECTORY_SEPARATOR . 'key.pem', $privKey );
-		$this->_privKey = openssl_pkey_get_public ( $privKey );
+		file_put_contents ( $this->_privPath, $privKey );
+		$this->_privKey = openssl_pkey_get_private ( $privKey );
 		$rp = openssl_pkey_get_details ( $r );
 		$pubKey = $rp ['key'];
-		file_put_contents ( $this->_keyPath . DIRECTORY_SEPARATOR . 'pub.pem', $pubKey );
+		file_put_contents ( $this->_pubPath, $pubKey );
 		$this->_pubKey = openssl_pkey_get_public ( $pubKey );
+		return [
+				'privKey' => $privKey,
+				'pubKey' => $pubKey,
+		];
 	}
+	
+	/**
+	 * Set Client Public Key 
+	 * @param unknown $data
+	 * @throws \Exception
+	 * @return boolean
+	 */
+	public function setupClientPubKey($data){
+		if (is_resource ( $this->_client_pubKey)) {
+			return true;
+		}
+		if(is_string($data)){
+			if(is_file($data)){
+				$prk = file_get_contents ( $data );
+				$this->_privKey = openssl_pkey_get_public( $prk );
+			}else{
+				$this->_privKey = openssl_pkey_get_public( $data );
+			}
+			return true;
+		}
+		throw new \Exception(__FUNCTION__.' expects Parameter 1 to be string');
+	}
+	
 	
 	/**
 	 * setup the private key
@@ -118,8 +207,7 @@ class RsaTool {
 		if (is_resource ( $this->_privKey )) {
 			return true;
 		}
-		$file = $this->_keyPath . DIRECTORY_SEPARATOR . 'key.pem';
-		$prk = file_get_contents ( $file );
+		$prk = file_get_contents ( $this->_privPath );
 		$this->_privKey = openssl_pkey_get_private ( $prk );
 		return true;
 	}
@@ -130,78 +218,138 @@ class RsaTool {
 		if (is_resource ( $this->_pubKey )) {
 			return true;
 		}
-		$file = $this->_keyPath . DIRECTORY_SEPARATOR . 'pub.pem';
-		$puk = file_get_contents ( $file );
+		$puk = file_get_contents ( $this->_pubPath );
 		$this->_pubKey = openssl_pkey_get_public ( $puk );
 		return true;
 	}
+	
+	
+	protected function encrypt($data, $key, $type) {
+		if (! is_string ( $data )) {
+			throw new \Exception ( 'String Is Needed!' );
+		}
+		if ($type == 'PRIVATE') {
+			$r = openssl_private_encrypt ( $data, $encrypted, $key );
+		} else {
+			$r = openssl_public_encrypt ( $data, $encrypted, $key );
+		}
+		if ($r) {
+			return base64_encode ( $encrypted );
+		} else {
+			throw new \Exception ( openssl_error_string () );
+		}
+	}
+	
+	/**
+	 * decrypt with the private key
+	 */
+	protected  function decrypt($encrypted,$key,$type) {
+		if (! is_string ( $encrypted )) {
+			throw new \Exception ( 'String Is Needed!' );
+		}
+		$encrypted = base64_decode ( $encrypted );
+		if ($type == 'PRIVATE') {
+			$r = openssl_private_decrypt ( $encrypted, $decrypted, $key );
+		} else {
+			$r = openssl_public_decrypt( $encrypted, $decrypted, $key );
+		}
+		
+		if ($r) {
+			return $decrypted;
+		} else {
+			throw new \Exception ( openssl_error_string () );
+		}
+	}
+	
 	
 	/**
 	 * encrypt with the private key
 	 */
 	public function privEncrypt($data) {
-		if (! is_string ( $data )) {
-			return null;
-		}
 		$this->setupPrivKey ();
-		$r = openssl_private_encrypt ( $data, $encrypted, $this->_privKey );
-		if ($r) {
-			return base64_encode ( $encrypted );
-		} else {
-			throw new \Exception ( openssl_error_string () );
-		}
+		return $this->encrypt($data, $this->_privKey, 'PRIVATE');
 	}
 	/**
 	 * decrypt with the private key
 	 */
 	public function privDecrypt($encrypted) {
-		if (! is_string ( $encrypted )) {
-			return null;
-		}
 		$this->setupPrivKey ();
-		$encrypted = base64_decode ( $encrypted );
-		$r = openssl_private_decrypt ( $encrypted, $decrypted, $this->_privKey );
-		if ($r) {
-			return $decrypted;
-		} else {
-			throw new \Exception ( openssl_error_string () );
-		}
+		return $this->decrypt($encrypted, $this->_privKey, 'PRIVATE');
 	}
+	
 	/**
 	 * encrypt with public key
 	 */
 	public function pubEncrypt($data) {
-		if (! is_string ( $data )) {
-			throw new \Exception ( 'String Is Needed!' );
-		}
-		
 		$this->setupPubKey ();
-		$r = openssl_public_encrypt ( $data, $encrypted, $this->_pubKey );
-		if ($r) {
-			return base64_encode ( $encrypted );
-		} else {
-			throw new \Exception ( openssl_error_string () );
-		}
+		return $this->encrypt($data, $this->_pubKey, 'PUBLIC');
 	}
+	
 	/**
 	 * * decrypt with the public key
 	 */
 	public function pubDecrypt($crypted) {
-		if (! is_string ( $crypted )) {
-			return null;
-		}
 		$this->setupPubKey ();
-		$crypted = base64_decode ( $crypted );
-		$r = openssl_public_decrypt ( $crypted, $decrypted, $this->_pubKey );
-		if ($r) {
-			return $decrypted;
-		} else {
-			throw new \Exception ( openssl_error_string () );
-		}
+		return $this->decrypt($crypted, $this->_pubKey, 'PUBLIC');
 	}
+	
+	/**
+	 * encrypt with client public key
+	 */
+	public function clientPubEncrypt($data,$ckey = '') {
+		$this->setupClientPubKey($ckey);
+		return $this->encrypt($data, $this->_client_pubKey, 'PUBLIC');
+	}
+	
+	/**
+	 * decrypt with the client public key
+	 */
+	public function clientPubDecrypt($crypted,$ckey = '') {
+		$this->setupClientPubKey ($ckey);
+		return $this->decrypt($crypted, $this->_client_pubKey, 'PUBLIC');
+	}
+	
+	/**
+	 * 生成签名
+	 *
+	 * @param string 签名材料
+	 * @param string 签名编码（base64）
+	 * @return 签名值
+	 */
+	public function sign($data){
+		$ret = false;
+		if (openssl_sign($data, $ret, $this->_privKey)){
+			$ret = base64_encode($ret);
+		}
+		return $ret;
+	}
+	
+	/**
+	 * 验证签名
+	 *
+	 * @param string 签名材料
+	 * @param string 签名值
+	 * @param string 签名编码（base64/hex/bin）
+	 * @return bool
+	 */
+	public function verify($data, $sign){
+		$ret = false;
+		$sign = base64_decode($sign);
+		if ($sign !== false) {
+			switch (openssl_verify($data, $sign, $this->_pubKey)){
+				case 1: $ret = true; break;
+				case 0:
+				case -1:
+				default: $ret = false;
+			}
+		}
+		return $ret;
+	}
+	
 	public function __destruct() {
 		@ fclose ( $this->_privKey );
 		@ fclose ( $this->_pubKey );
+		@ fclose ( $this->_client_pubKey );
 	}
 }
 

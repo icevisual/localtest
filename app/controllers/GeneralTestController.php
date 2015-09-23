@@ -15,27 +15,145 @@ use Lib\Fun\PointsV2;
 use Illuminate\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Intervention\Image\Facades\Image;
+use Ser\Sms\SmsService;
 class GeneralTestController extends \BaseController
 {
 	
 	
 	public function returnDate(){
-		
-		
 		exit(json_encode(['data'=>'ok']));
 	}
 	
 	
+	public function get_access_token(){
+		
+		$identification	= \Input::get('identification');
+		$secret 		= \Input::get('secret');
+		
+		
+		
+	}
+
+	
+	public function  cal(){
+		$data = [
+				'a' => 8,
+				'b'	=> 10.4,
+				'c'	=> 12,
+				'r'	=> 60,
+				'x'	=> 0.5,
+				's'	=> 4600,
+		];
+		
+		$m 		= $data['a'] + $data['b'] +$data['c'];
+		$base 	= $data['s'] * ($data['r'] / ($data['r'] + $m)) * $data['x'];
+		return $base /3 + ($data['s'] - $base) * $data['a'] / $m;
+		dump($base /3 + ($data['s'] - $base) * $data['a'] / $m);
+		dump($base /3 + ($data['s'] - $base) * $data['b'] / $m);
+		dump($base /3 + ($data['s'] - $base) * $data['c'] / $m);
+		exit;
+	}
+	
+	public function multy(){
+		
+		$data = [
+				'uid'=>117215,
+				'token'=>'bXP-L3OnCI',
+				'name' => 'TEST',
+				'identity' => '130404201401013871',
+				'card' => '6013820800106129339',
+				'comname' => 'asdasda',
+				'comarea_id' => '26',
+				'comaddress' => 'asddaas',
+				'comtel' => '12312312',
+				'homearea_id' => '26',
+				'homeaddress' => 'sasadf',
+		];
+		$url = 'http://api.guozhongbao.com/user/create_userinfo';
+		
+		$reqUrls = [];
+		foreach (range(1, 50) as $k => $v){
+			$reqUrls[] = $url;
+		}
+		$res = curl_multi_request($reqUrls,$data);
+		
+		foreach ($res as $k => $v){
+			echo $k .'|'.$v.'<br/>';
+		}
+		exit;
+	}
+	
 	public function test(){
-		$data = '山东科技将sdfsdf1243123123山东';
+		
+		$RsaClass = new \RsaTool(storage_path());
+		$ress = $RsaClass->createKey();
+		dump($ress);
+		$data = 'AAAAAAAAAAAAAAAAA';
+		
+		$res = $RsaClass->sign($data);
+		dump($res);
+		dump($RsaClass->verify($data,$res));
+		
+		//$data = sha1($data);
+		dump($data);
+		$pen_data =  $RsaClass->pubEncrypt($data);
+		dump($pen_data);
+		$de =  $RsaClass->privDecrypt($pen_data);
+		dump($de);
+		dump($data);
+		$pen_data =  $RsaClass->privEncrypt($data);
+		dump($pen_data);
+		$de =  $RsaClass->pubDecrypt($pen_data);
+		dump($de);
+		
+		exit;
+		
+		
+		
+		
+		
+		//http_build_query
+		//chunk_split
+		//array_chunk
+		edump($_SERVER);
+		dump(hash_algos());
+		
+		exit;
+		
+		function chunk_split_unicode($str, $l = 76, $e = "\r\n") {
+			$tmp = array_chunk(
+					preg_split("//u", $str, -1, PREG_SPLIT_NO_EMPTY), $l);
+			$str = "";
+			foreach ($tmp as $t) {
+				$str .= join("", $t) . $e;
+			}
+			return $str;
+		}
+		
+		$str = "asdasdadasdadadadadadas";
+		echo chunk_split($str, 4) ."\n";
+		echo chunk_split_unicode($str, 4,'<br/>');
+
+		
+		$input_array = array('a', 'b', 'c', 'd', 'e');
+		print_r(array_chunk($input_array, 2));
+		print_r(array_chunk($input_array, 2, true));
+		
+		
+		exit;
+		
+		$data = '山东科技将sd,.<>\\////????fsdf1243123123山东';
 		$AESMcrypt = new \AESTool();
+		
+		
+		$randKey = \CommonTool::createNonceStr(32);
+		
+		dump($randKey);
 		$AESMcrypt->setSecretKey('ads');
 			$res = $AESMcrypt->encrypt($data);
 			$res = $AESMcrypt->decrypt($res);
 			
-			if($res != $data){
-				edump($k);
-			}
+		dump($res);
 		
 		exit;
 		dump($res);
@@ -109,7 +227,7 @@ class GeneralTestController extends \BaseController
 		];
 		$order = \Order\Main::where('orderid',$orderid)->first();
 		return call_user_func_array(
-				[new $config[$order['order_verison']][0] ,$config[$order['order_verison']][1]],
+				[new $config[$order['order_version']][0] ,$config[$order['order_version']][1]],
 				[$uid, $orderid, $type, $pay_at]);
 		
 		
