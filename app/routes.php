@@ -4,6 +4,7 @@ Route::get ( '/', function () {
 } );
 	if( class_exists('LocaltestController')){
 		include __DIR__.'/helper.php';
+		Route::post('redirect'				, 'GeneralTestController@redirect');
 		Route::get('risk'				, 'Crm\RiskController@index');
 		Route::get('localtest'			, 'LocalTestController@index');
 		Route::get('document'			, 'LocalTestController@generate_api_doc');

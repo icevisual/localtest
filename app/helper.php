@@ -3,12 +3,6 @@
 
 class CommonTool{
 	
-	
-	/**
-	 * Create A Random String WIth A Given Length
-	 * @param number $length
-	 * @return string
-	 */
 	public static function createNonceStr($length = 16) {
 		$chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 		$str = "";
@@ -18,10 +12,41 @@ class CommonTool{
 		return $str;
 	}
 	
+	public static function dataString($data){
+		ksort($data);
+		$string = '';
+		foreach ($data as $k => $v){
+			$string .= '&'.$k.'='.$v;
+		}
+		$string = substr($string, 1);
+		return $string;
+	}
 	
-// 	public static function 
+	public static function dataSignature($data){
+		// TODO : 深度ARRAY
+		$string = static::dataString($data);
+		$signature = sha1 ( $string );
+		$data['signature'] = $signature;
+		ksort($data);
+		return $data;
+	}
 	
+	public static function checkSignature(array $data){
+		if(isset($data['signature'])){
+			$signature_send = $data['signature'];
+			unset($data['signature']);
+			$signature =  sha1(static ::dataString($data));
+			return $signature_send == $signature;
+		}
+		return false;
+	}
 	
+	public static function dataProcess(array $data){
+		$data['timestamp'] 	= time ();
+		$data['nonceStr'] 	= static::createNonceStr ();
+		$signed_data = static ::dataSignature($data); 
+		return json_encode($signed_data);
+	}
 }
 
 class AESTool{
@@ -79,7 +104,8 @@ class AESTool{
 		$block_size = mcrypt_get_block_size($this->cipher, $this->mode);
 		$padding_char = $block_size - (strlen($content) % $block_size);
 		$srcdata .= str_repeat(chr($padding_char),$padding_char);
-		return mcrypt_encrypt($this->cipher, $this->getSecretKey(), $srcdata, $this->mode, $this->iv);
+		$resultData =  mcrypt_encrypt($this->cipher, $this->getSecretKey(), $srcdata, $this->mode, $this->iv);
+		return base64_encode($resultData);
 	}
 
 	/**
@@ -91,7 +117,10 @@ class AESTool{
 		if(empty($content)){
 			return false;
 		}
-
+		$content = base64_decode($content);
+		if($content === false) {
+			throw new \Exception('Failed To Decode Received Data Using base64_decode');
+		}
 		$content = mcrypt_decrypt($this->cipher, $this->getSecretKey(), $content, $this->mode, $this->iv);
 		$block = mcrypt_get_block_size($this->cipher, $this->mode);
 		$pad = ord($content[($len = strlen($content)) - 1]);
@@ -114,17 +143,14 @@ class AESTool{
 class RsaTool {
 	
 	/**
-	 * 私钥
+	 * 我的私钥
 	 * @var unknown
 	 */
 	private $_privKey;
-	
 	/**
-	 * 公钥
+	 * client公钥
 	 * @var unknown
 	 */
-	private $_pubKey;
-	
 	private $_client_pubKey;
 	
 	private $_privPath;
@@ -145,7 +171,7 @@ class RsaTool {
 		}
 		if( is_dir ( $path1 )){
 			$this->_privPath = $path1. DIRECTORY_SEPARATOR . 'priv.pem';
-			$this->_pubPath = $path1. DIRECTORY_SEPARATOR . 'pub.pem';
+			$this->_pubPath = $path1. DIRECTORY_SEPARATOR . 'cli-pub.pem';
 		}else if ( is_file( $path1 ) && is_file( $path2 ) ){
 			$this->_privPath = $path1;
 			$this->_pubPath = $path2;
@@ -158,19 +184,16 @@ class RsaTool {
 	 * Create New RAS Keys
 	 * @return multitype:unknown
 	 */
-	public function createKey() {
-		
+	public static function createKey($privKeyPath,$pubKeyPath) {
 		$r = openssl_pkey_new ([
 				'private_key_bits' => 1024,
 				'private_key_type' => OPENSSL_KEYTYPE_RSA,
 		]);
 		openssl_pkey_export ( $r, $privKey );
-		file_put_contents ( $this->_privPath, $privKey );
-		$this->_privKey = openssl_pkey_get_private ( $privKey );
+		file_put_contents ( $privKeyPath, $privKey );
 		$rp = openssl_pkey_get_details ( $r );
 		$pubKey = $rp ['key'];
-		file_put_contents ( $this->_pubPath, $pubKey );
-		$this->_pubKey = openssl_pkey_get_public ( $pubKey );
+		file_put_contents ( $pubKeyPath, $pubKey );
 		return [
 				'privKey' => $privKey,
 				'pubKey' => $pubKey,
@@ -190,9 +213,9 @@ class RsaTool {
 		if(is_string($data)){
 			if(is_file($data)){
 				$prk = file_get_contents ( $data );
-				$this->_privKey = openssl_pkey_get_public( $prk );
+				$this->_client_pubKey = openssl_pkey_get_public( $prk );
 			}else{
-				$this->_privKey = openssl_pkey_get_public( $data );
+				$this->_client_pubKey = openssl_pkey_get_public( $data );
 			}
 			return true;
 		}
@@ -215,11 +238,11 @@ class RsaTool {
 	 * setup the public key
 	 */
 	public function setupPubKey() {
-		if (is_resource ( $this->_pubKey )) {
+		if (is_resource ( $this->_client_pubKey )) {
 			return true;
 		}
 		$puk = file_get_contents ( $this->_pubPath );
-		$this->_pubKey = openssl_pkey_get_public ( $puk );
+		$this->_client_pubKey = openssl_pkey_get_public ( $puk );
 		return true;
 	}
 	
@@ -282,7 +305,7 @@ class RsaTool {
 	 */
 	public function pubEncrypt($data) {
 		$this->setupPubKey ();
-		return $this->encrypt($data, $this->_pubKey, 'PUBLIC');
+		return $this->encrypt($data, $this->_client_pubKey, 'PUBLIC');
 	}
 	
 	/**
@@ -290,22 +313,6 @@ class RsaTool {
 	 */
 	public function pubDecrypt($crypted) {
 		$this->setupPubKey ();
-		return $this->decrypt($crypted, $this->_pubKey, 'PUBLIC');
-	}
-	
-	/**
-	 * encrypt with client public key
-	 */
-	public function clientPubEncrypt($data,$ckey = '') {
-		$this->setupClientPubKey($ckey);
-		return $this->encrypt($data, $this->_client_pubKey, 'PUBLIC');
-	}
-	
-	/**
-	 * decrypt with the client public key
-	 */
-	public function clientPubDecrypt($crypted,$ckey = '') {
-		$this->setupClientPubKey ($ckey);
 		return $this->decrypt($crypted, $this->_client_pubKey, 'PUBLIC');
 	}
 	
@@ -336,7 +343,7 @@ class RsaTool {
 		$ret = false;
 		$sign = base64_decode($sign);
 		if ($sign !== false) {
-			switch (openssl_verify($data, $sign, $this->_pubKey)){
+			switch (openssl_verify($data, $sign, $this->_client_pubKey)){
 				case 1: $ret = true; break;
 				case 0:
 				case -1:
@@ -348,10 +355,69 @@ class RsaTool {
 	
 	public function __destruct() {
 		@ fclose ( $this->_privKey );
-		@ fclose ( $this->_pubKey );
 		@ fclose ( $this->_client_pubKey );
 	}
 }
+
+
+class RsaWorker{
+	
+	private $AES ;
+	private $AES_secret ;
+	
+	private $RSA ;
+	
+	private $privKeyPath;
+	private $pubKeyPath;
+	
+	public function __construct($privKeyPath , $pubKeyPath){
+		$this->AES = new \AESTool();
+		$this->init($privKeyPath,$pubKeyPath);
+	}
+	
+	public function sendData ($data){
+		$data_string = \CommonTool::dataProcess($data);
+		$this->AES_secret = \CommonTool::createNonceStr(6);
+		$this->AES->setSecretKey($this->AES_secret);
+		$encrypted_data = $this->AES->encrypt($data_string);
+		$sendData ['data'] = $encrypted_data;
+		$sendData ['key'] = $this->RSA->pubEncrypt($this->AES_secret);
+		//digital signature
+		return $sendData;
+	}
+	
+	public function receiveData (array $sendData){
+		try {
+			$AES_secret = $this->RSA->privDecrypt($sendData['key']);
+		}catch(\Exception $e){
+			return false;
+		}
+	
+		$this->AES_secret = $AES_secret;
+		$this->AES->setSecretKey($this->AES_secret );
+		$data = $this->AES->decrypt($sendData['data']);
+		$data = json_decode($data,true);
+		if(json_last_error() == JSON_ERROR_NONE){
+			if(\CommonTool::checkSignature($data) === true){
+				return $data;
+			}else{
+				throw new \Exception('Check Signature Failed');
+			}
+		}else{
+			throw new \Exception('Received Data json_decode Failed');
+		}
+	}
+	
+	public function init($privKeyPath,$pubKeyPath){
+		$this->privKeyPath = $privKeyPath;
+		$this->pubKeyPath = $pubKeyPath;
+		if(!is_file($this->privKeyPath) || !is_file($this->pubKeyPath) ){
+			throw new \Exception('Can\'t Find Private Key Or Public Key!');
+		}
+		$this->RSA = new \RsaTool ( $this->privKeyPath,$this->pubKeyPath);
+	}
+}
+
 
 /**
  * $str 原始中文字符串
@@ -1063,14 +1129,18 @@ if (! function_exists ( 'curl' )) {
 	function curl_get($api) {
 		// $api = 'http://v.showji.com/Locating/showji.com20150416273007.aspx?output=json&m='.$phone;
 		$ch = curl_init ();
-		
 		curl_setopt ( $ch, CURLOPT_URL, $api );
 		curl_setopt ( $ch, CURLOPT_RETURNTRANSFER, 1 );
 		curl_setopt ( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
 		$User_Agen = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36';
-		curl_setopt ( $ch, CURLOPT_USERAGENT, $User_Agen );
-		
+		curl_setopt ( $ch, CURLOPT_TIMEOUT, 5 ); // 设置超时
+	 // curl_setopt($ch, CURLOPT_USERAGENT, $User_Agen); //用户访问代理 User-Agent
+		curl_setopt ( $ch, CURLOPT_FOLLOWLOCATION, 1 ); // 跟踪301
+		curl_setopt ( $ch, CURLOPT_RETURNTRANSFER, 1 ); // 返回结果
 		$result = curl_exec ( $ch );
+// 		echo curl_errno($ch);
+// 		echo curl_error($ch);
+		curl_close($ch);
 		return $result;
 		$result = json_decode ( $result, true );
 	}
@@ -1091,7 +1161,7 @@ if (! function_exists ( 'curl' )) {
 		$info = curl_exec ( $ch );
 		
 		curl_close ( $ch );
-		edump ( $info );
+		return $info;
 		$json = json_decode ( $info, 1 );
 		if ($json) {
 			return $json;
