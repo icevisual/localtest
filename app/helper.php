@@ -1,7 +1,77 @@
 <?php
 
+define('TRACELOG', TRUE);
+define('TRACELOGPATH', storage_path().'/trace/');
+define('TRACELOG_ECHO', FALSE);
 
 class CommonTool{
+	
+	public static function log($title,$msg) {
+		if(TRACELOG === FALSE) return ;
+		static $referer = '';
+		static $date_point = [];
+		$message = [];
+		$date = date ( "Y-m-d H:i:s" ) ;
+		if(!isset($date_point[$date])){
+			$date_point[$date] = 1;
+			$message[] = $date;
+		}else{
+			$date_point[$date] ++ ;
+		}
+		$step = $date_point[$date];
+		
+		if(!$referer){
+			if (isset ( $_SERVER ['HTTP_REFERER'] )) {
+				$referer = $_SERVER ['HTTP_REFERER'];
+			} elseif (isset ( $_SERVER ['HTTP_HOST'] )) {
+				$referer = $_SERVER ['HTTP_HOST'] . $_SERVER ['REQUEST_URI'];
+			} else {
+				$referer = 'Unknow';
+			}
+			$message[] = $referer;
+		}
+		if($message){
+			$message = '['.implode(']-[', $message).']'."\n";
+		} else {
+			$message = '';
+		}
+		
+		$filePath = TRACELOGPATH . date ( "Ymd" );
+		$msg = $message.$step. ".[$title]-[ $msg ]\n";
+		file_put_contents ( $filePath, $msg, FILE_APPEND );
+		@chmod ( $filePath, 0777 );
+		if (TRACELOG_ECHO) {
+			echo $msg;
+		}
+	}
+	
+	
+	public static function sign2($plain,$merId){
+		$log = new Logger();
+		//    	$mer_pk = require('config.php');
+		try{
+			//用户租钥证书
+			$priv_key_file = privatekey;
+			$log->logInfo("The private key path for：".$priv_key_file);
+			if(!File_exists($priv_key_file)){
+				return FALSE;
+			}
+			$fp = fopen($priv_key_file, "rb");
+	
+			$priv_key = fread($fp, 8192);
+			@fclose($fp);
+			$pkeyid = openssl_get_privatekey($priv_key);
+			if(!is_resource($pkeyid)){ return FALSE;}
+			// compute signature
+			@openssl_sign($plain, $signature, $pkeyid);
+			// free the key from memory
+			@openssl_free_key($pkeyid);
+			$log->logInfo("Signature string for：".$signature);
+			return base64_encode($signature);
+		}catch(Exception $e){
+			$log->logInfo("Signature attestation failure".$e->getMessage());
+		}
+	}
 	
 	public static function createNonceStr($length = 16) {
 		$chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -23,27 +93,31 @@ class CommonTool{
 	}
 	
 	public static function dataSignature($data){
-		// TODO : 深度ARRAY
 		$string = static::dataString($data);
 		$signature = sha1 ( $string );
 		$data['signature'] = $signature;
 		ksort($data);
+		//sign_types summary
 		return $data;
 	}
 	
 	public static function checkSignature(array $data){
 		if(isset($data['signature'])){
 			$signature_send = $data['signature'];
+			\CommonTool::log('signature_send',$signature_send);
 			unset($data['signature']);
 			$signature =  sha1(static ::dataString($data));
+			\CommonTool::log('signature',$signature);
 			return $signature_send == $signature;
 		}
 		return false;
 	}
 	
 	public static function dataProcess(array $data){
+		//TODO : check data
 		$data['timestamp'] 	= time ();
 		$data['nonceStr'] 	= static::createNonceStr ();
+		\CommonTool::log('nonceStr',$data['nonceStr']);
 		$signed_data = static ::dataSignature($data); 
 		return json_encode($signed_data);
 	}
@@ -316,6 +390,33 @@ class RsaTool {
 		return $this->decrypt($crypted, $this->_client_pubKey, 'PUBLIC');
 	}
 	
+	
+	public static function sign11($plain){
+		$log = new Logger();
+		try{
+			//用户租钥证书
+			$priv_key_file = privatekey;
+			$log->logInfo("The private key path for：".$priv_key_file);
+			if(!File_exists($priv_key_file)){
+				return FALSE;
+			}
+			$fp = fopen($priv_key_file, "rb");
+			$priv_key = fread($fp, 8192);
+			@fclose($fp);
+			$pkeyid = openssl_get_privatekey($priv_key);
+			if(!is_resource($pkeyid)){ return FALSE;}
+			// compute signature
+			@openssl_sign($plain, $signature, $pkeyid);
+			// free the key from memory
+			@openssl_free_key($pkeyid);
+			$log->logInfo("Signature string for：".$signature);
+			return base64_encode($signature);
+		}catch(Exception $e){
+			$log->logInfo("Signature attestation failure".$e->getMessage());
+		}
+	}
+	
+	
 	/**
 	 * 生成签名
 	 *
@@ -325,6 +426,7 @@ class RsaTool {
 	 */
 	public function sign($data){
 		$ret = false;
+		$this->setupPrivKey();
 		if (openssl_sign($data, $ret, $this->_privKey)){
 			$ret = base64_encode($ret);
 		}
@@ -341,6 +443,7 @@ class RsaTool {
 	 */
 	public function verify($data, $sign){
 		$ret = false;
+		$this->setupPubKey();
 		$sign = base64_decode($sign);
 		if ($sign !== false) {
 			switch (openssl_verify($data, $sign, $this->_client_pubKey)){
@@ -377,31 +480,43 @@ class RsaWorker{
 	
 	public function sendData ($data){
 		$data_string = \CommonTool::dataProcess($data);
+		\CommonTool::log('data_string',$data_string);
 		$this->AES_secret = \CommonTool::createNonceStr(6);
+		\CommonTool::log('AES_secret',$this->AES_secret);
 		$this->AES->setSecretKey($this->AES_secret);
-		$encrypted_data = $this->AES->encrypt($data_string);
-		$sendData ['data'] = $encrypted_data;
-		$sendData ['key'] = $this->RSA->pubEncrypt($this->AES_secret);
-		//digital signature
+		$encrypted_data 	= $this->AES->encrypt($data_string);
+		\CommonTool::log('encrypted_data',$encrypted_data);
+		$sendData ['data'] 	= $encrypted_data;
+		$sendData ['key'] 	= $this->RSA->pubEncrypt($this->AES_secret);
+		$sendData ['signature'] = $this->RSA->sign('asd');
+		//TODO :digital signature
 		return $sendData;
 	}
 	
 	public function receiveData (array $sendData){
+		$data_struct = ['data','key','signature'];
+		if(array_diff($data_struct, array_keys($sendData))){
+			throw new \Exception('Data Structure Error');
+		}
 		try {
 			$AES_secret = $this->RSA->privDecrypt($sendData['key']);
+			\CommonTool::log('AES_secret',$AES_secret);
 		}catch(\Exception $e){
-			return false;
+			throw new \Exception('Rsa Verify Failed');
 		}
-	
+		if($this->RSA->verify($sendData['data'], $sendData['signature']) === false){
+			throw new \Exception('Check Signature Failed');
+		}
 		$this->AES_secret = $AES_secret;
 		$this->AES->setSecretKey($this->AES_secret );
 		$data = $this->AES->decrypt($sendData['data']);
+		\CommonTool::log('decrypted_data',$data);
 		$data = json_decode($data,true);
 		if(json_last_error() == JSON_ERROR_NONE){
 			if(\CommonTool::checkSignature($data) === true){
 				return $data;
 			}else{
-				throw new \Exception('Check Signature Failed');
+				throw new \Exception('Check Summary Failed');
 			}
 		}else{
 			throw new \Exception('Received Data json_decode Failed');

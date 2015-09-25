@@ -102,8 +102,30 @@ class GeneralTestController extends \BaseController {
 		}
 	}
 	
-	public function test() {
+	public function server(){
+
+		$myPrivKeyPath = storage_path().'/m-priv-key.pem';
+		$myPubKeyPath = storage_path().'/m-pub-key.pem';
 		
+		$clientPrivKeyPath = storage_path().'/c-priv-key.pem';
+		$clientPubKeyPath = storage_path().'/c-pub-key.pem';
+		
+		$RsaServer = new \RsaWorker($myPrivKeyPath, $clientPubKeyPath);
+		$sendData = \Input::all();
+		$res = $RsaServer->receiveData($sendData);
+		edump($res);
+	}
+	
+	public function test() {
+		$url = 'http://localhost:86/redirect';
+		$reqUrl = 'http://www.baidu.com';
+		$reqUrl = 'http://localhost:89/v1.3.1/redpacket/get_redpacket_config';
+		$data = [
+				'url' => $reqUrl,
+				'method' => 'get',
+				'param' => '',
+		];
+		echo curl_post($url, $data);
 		exit;
 // 		header("Content-type:text/html;charset=gbk");
 // 		$UserService = new \Ser\User\UserService();
