@@ -92,20 +92,20 @@ class CommonTool{
 		return $string;
 	}
 	
-	public static function dataSignature($data){
+	public static function dataSummary($data){
 		$string = static::dataString($data);
 		$signature = sha1 ( $string );
-		$data['signature'] = $signature;
+		$data['summary'] = $signature;
 		ksort($data);
 		//sign_types summary
 		return $data;
 	}
 	
-	public static function checkSignature(array $data){
-		if(isset($data['signature'])){
-			$signature_send = $data['signature'];
+	public static function checkSummary(array $data){
+		if(isset($data['summary'])){
+			$signature_send = $data['summary'];
 			\CommonTool::log('signature_send',$signature_send);
-			unset($data['signature']);
+			unset($data['summary']);
 			$signature =  sha1(static ::dataString($data));
 			\CommonTool::log('signature',$signature);
 			return $signature_send == $signature;
@@ -118,8 +118,9 @@ class CommonTool{
 		$data['timestamp'] 	= time ();
 		$data['nonceStr'] 	= static::createNonceStr ();
 		\CommonTool::log('nonceStr',$data['nonceStr']);
-		$signed_data = static ::dataSignature($data); 
-		return json_encode($signed_data);
+// 		ksort($data);
+		$data = static ::dataSummary($data); 
+		return json_encode($data);
 	}
 }
 
@@ -390,33 +391,6 @@ class RsaTool {
 		return $this->decrypt($crypted, $this->_client_pubKey, 'PUBLIC');
 	}
 	
-	
-	public static function sign11($plain){
-		$log = new Logger();
-		try{
-			//用户租钥证书
-			$priv_key_file = privatekey;
-			$log->logInfo("The private key path for：".$priv_key_file);
-			if(!File_exists($priv_key_file)){
-				return FALSE;
-			}
-			$fp = fopen($priv_key_file, "rb");
-			$priv_key = fread($fp, 8192);
-			@fclose($fp);
-			$pkeyid = openssl_get_privatekey($priv_key);
-			if(!is_resource($pkeyid)){ return FALSE;}
-			// compute signature
-			@openssl_sign($plain, $signature, $pkeyid);
-			// free the key from memory
-			@openssl_free_key($pkeyid);
-			$log->logInfo("Signature string for：".$signature);
-			return base64_encode($signature);
-		}catch(Exception $e){
-			$log->logInfo("Signature attestation failure".$e->getMessage());
-		}
-	}
-	
-	
 	/**
 	 * 生成签名
 	 *
@@ -488,7 +462,7 @@ class RsaWorker{
 		\CommonTool::log('encrypted_data',$encrypted_data);
 		$sendData ['data'] 	= $encrypted_data;
 		$sendData ['key'] 	= $this->RSA->pubEncrypt($this->AES_secret);
-		$sendData ['signature'] = $this->RSA->sign('asd');
+		$sendData ['signature'] = $this->RSA->sign($encrypted_data);
 		//TODO :digital signature
 		return $sendData;
 	}
@@ -502,7 +476,7 @@ class RsaWorker{
 			$AES_secret = $this->RSA->privDecrypt($sendData['key']);
 			\CommonTool::log('AES_secret',$AES_secret);
 		}catch(\Exception $e){
-			throw new \Exception('Rsa Verify Failed');
+			throw new \Exception('Failed To Decode AES Secret');
 		}
 		if($this->RSA->verify($sendData['data'], $sendData['signature']) === false){
 			throw new \Exception('Check Signature Failed');
@@ -513,11 +487,10 @@ class RsaWorker{
 		\CommonTool::log('decrypted_data',$data);
 		$data = json_decode($data,true);
 		if(json_last_error() == JSON_ERROR_NONE){
-			if(\CommonTool::checkSignature($data) === true){
+			if(\CommonTool::checkSummary($data)){
 				return $data;
-			}else{
-				throw new \Exception('Check Summary Failed');
 			}
+			throw new \Exception('CheckSignature Failed');
 		}else{
 			throw new \Exception('Received Data json_decode Failed');
 		}
