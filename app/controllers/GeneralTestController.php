@@ -117,6 +117,74 @@ class GeneralTestController extends \BaseController {
 	}
 	
 	public function test() {
+
+// 		$critRate = 0.1;
+// // 		\RPGCommon::critHit($critRate);
+// // 		$res = \RPGCommon::multiple_time(10000,'\RPGCommon::critHit',[$critRate]);
+// 		$res = \RPGCommon::multiple_time(10000,'\RPGCommon::hitRandom',[$critRate]);
+// 		edump($res);
+		
+		$dataA = [
+				'HP' => 1200,
+				'attack' => 130,
+				'defence' => 8,//伤害减少 （装甲值 * 0.06）／（装甲值 * 0.06 ＋ 1） 
+				'miss rate'	=> 10, //攻击丢失率
+				'crit rate'	=> 7, //暴击率
+				'dodge rate' => 1, //闪避率
+				'attack speed' => 1.5, //attack 1 time after 1.5 second
+		];
+		
+		$dataB = [
+				'HP' => 1000,
+				'attack' => 100,
+				'defence' => 10,//伤害减少 （装甲值 * 0.06）／（装甲值 * 0.06 ＋ 1）
+				'miss rate'	=> 5,
+				'crit rate'	=> 5,
+				'dodge rate' => 5,
+				'attack speed' => 1, //attack 1 time  per second
+		];
+		
+		$pa = new RPGPersonUnit('Jon',$dataA);
+		
+		$pb = new RPGPersonUnit('Tom',$dataB);
+		
+// 		$res = \RPGCommon::multiple_time(100,'\RPGCommon::attack',[$pa,$pb]);
+		\RPGCommon::battle2($pa, $pb);
+		dump($res);
+// 		edump(attack($dataA,$dataB));
+		
+		exit;
+		$content = file_get_contents('secret.ept');
+		
+		$AESTool = new AESTool();
+		$AESTool->setSecretKey('icevisual');
+		$content = $AESTool->decrypt($content);
+		echo iconv('GBK', 'UTF-8', $content);
+		exit;
+		
+		
+		
+		
+		
+		$content = file_get_contents('secret.txt');
+		
+		$AESTool = new AESTool();
+		$AESTool->setSecretKey('icevisual');
+		$content = $AESTool->encrypt($content);
+		echo $content;
+		file_put_contents('secret.ept', $content);
+// 		echo iconv('GBK', 'UTF-8', $content);
+		
+		
+		
+		exit;
+		
+		
+		
+		
+		
+		
+		
 		$url = 'http://localhost:86/redirect';
 		$reqUrl = 'http://www.baidu.com';
 		$reqUrl = 'http://localhost:89/v1.3.1/redpacket/get_redpacket_config';

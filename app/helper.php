@@ -1,508 +1,254 @@
 <?php
 
-define('TRACELOG', TRUE);
-define('TRACELOGPATH', storage_path().'/trace/');
-define('TRACELOG_ECHO', FALSE);
+include __DIR__ .'/GZBTool.php';
 
-class CommonTool{
+
+class UnitBase implements ArrayAccess{
 	
-	public static function log($title,$msg) {
-		if(TRACELOG === FALSE) return ;
-		static $referer = '';
-		static $date_point = [];
-		$message = [];
-		$date = date ( "Y-m-d H:i:s" ) ;
-		if(!isset($date_point[$date])){
-			$date_point[$date] = 1;
-			$message[] = $date;
-		}else{
-			$date_point[$date] ++ ;
-		}
-		$step = $date_point[$date];
-		
-		if(!$referer){
-			if (isset ( $_SERVER ['HTTP_REFERER'] )) {
-				$referer = $_SERVER ['HTTP_REFERER'];
-			} elseif (isset ( $_SERVER ['HTTP_HOST'] )) {
-				$referer = $_SERVER ['HTTP_HOST'] . $_SERVER ['REQUEST_URI'];
-			} else {
-				$referer = 'Unknow';
+	protected  $_attr ;
+	
+	protected  $_name ;
+	
+	public static $_attributes = [
+				'HP' => 100,
+				'attack' => 1,
+				'defence' => 1,//伤害减少 （装甲值 * 0.06）／（装甲值 * 0.06 ＋ 1） 
+				'miss rate'	=> 10, //攻击丢失率
+				'crit rate'	=> 1, //暴击率
+				'dodge rate' => 1, //闪避率
+				'attack speed' => 1, //attack 1 time  per second
+		];
+	
+	public function init(){
+		$this->_attr = static::$_attributes;
+	}
+	
+	public function __construct($name ,array $initData = []){
+		$this->_name = $name;
+		if(empty($initData)){
+			$this->init();
+		}else {
+			$initData = $initData + self::$_attributes;
+			if(count($initData) > count(self::$_attributes) ){
+				throw new \Exception('Attr Number Error');
 			}
-			$message[] = $referer;
-		}
-		if($message){
-			$message = '['.implode(']-[', $message).']'."\n";
-		} else {
-			$message = '';
-		}
-		
-		$filePath = TRACELOGPATH . date ( "Ymd" );
-		$msg = $message.$step. ".[$title]-[ $msg ]\n";
-		file_put_contents ( $filePath, $msg, FILE_APPEND );
-		@chmod ( $filePath, 0777 );
-		if (TRACELOG_ECHO) {
-			echo $msg;
+			$this->_attr = $initData;
 		}
 	}
 	
-	
-	public static function sign2($plain,$merId){
-		$log = new Logger();
-		//    	$mer_pk = require('config.php');
-		try{
-			//用户租钥证书
-			$priv_key_file = privatekey;
-			$log->logInfo("The private key path for：".$priv_key_file);
-			if(!File_exists($priv_key_file)){
-				return FALSE;
-			}
-			$fp = fopen($priv_key_file, "rb");
-	
-			$priv_key = fread($fp, 8192);
-			@fclose($fp);
-			$pkeyid = openssl_get_privatekey($priv_key);
-			if(!is_resource($pkeyid)){ return FALSE;}
-			// compute signature
-			@openssl_sign($plain, $signature, $pkeyid);
-			// free the key from memory
-			@openssl_free_key($pkeyid);
-			$log->logInfo("Signature string for：".$signature);
-			return base64_encode($signature);
-		}catch(Exception $e){
-			$log->logInfo("Signature attestation failure".$e->getMessage());
+	public function injured($damage){
+		echo $this->_name.' is hurted at '.
+		$damage.' Point , decrease '.
+		($damage > $this['HP'] ? $this['HP'] :$damage).' HP,';
+		$this['HP'] -= floatval($damage);
+		echo 'Rest HP '.$this['HP'].PHP_EOL;
+		if($this['HP'] <= 0 ){
+			$this->died();
 		}
 	}
 	
-	public static function createNonceStr($length = 16) {
-		$chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-		$str = "";
-		for($i = 0; $i < $length; $i ++) {
-			$str .= substr ( $chars, mt_rand ( 0, strlen ( $chars ) - 1 ), 1 );
-		}
-		return $str;
+	public function alive(){
+		return $this['HP'] > 0 ;
 	}
 	
-	public static function dataString($data){
-		ksort($data);
-		$string = '';
-		foreach ($data as $k => $v){
-			$string .= '&'.$k.'='.$v;
-		}
-		$string = substr($string, 1);
-		return $string;
+	public function died(){
+		echo $this->_name.' Died'.PHP_EOL;
 	}
 	
-	public static function dataSummary($data){
-		$string = static::dataString($data);
-		$signature = sha1 ( $string );
-		$data['summary'] = $signature;
-		ksort($data);
-		//sign_types summary
-		return $data;
+	public function getName(){
+		return $this->_name;
 	}
 	
-	public static function checkSummary(array $data){
-		if(isset($data['summary'])){
-			$signature_send = $data['summary'];
-			\CommonTool::log('signature_send',$signature_send);
-			unset($data['summary']);
-			$signature =  sha1(static ::dataString($data));
-			\CommonTool::log('signature',$signature);
-			return $signature_send == $signature;
+	public function __get($key){
+		if(isset($this->_attr[$key])){
+			return $this->_attr[$key];
 		}
 		return false;
 	}
 	
-	public static function dataProcess(array $data){
-		//TODO : check data
-		$data['timestamp'] 	= time ();
-		$data['nonceStr'] 	= static::createNonceStr ();
-		\CommonTool::log('nonceStr',$data['nonceStr']);
-// 		ksort($data);
-		$data = static ::dataSummary($data); 
-		return json_encode($data);
+	
+	public function getAttack(){
+		$waveRange = mt_rand(1,100) > 50 ? -1 : 1;
+		return $this->_attr['attack'] + $waveRange * mt_rand(1,10);
 	}
+
+	/**
+	 * @param offset
+	 */
+	public function offsetExists ($offset) {
+		return isset($this->_attr[$offset]);
+	}
+	
+	/**
+	 * @param offset
+	 */
+	public function offsetGet ($offset) {
+		$method = 'get'.ucfirst($offset);
+		if(method_exists($this, 'get'.ucfirst($offset))){
+			return call_user_func(array($this,$method));
+		}
+		return isset($this->_attr[$offset]) ? $this->_attr[$offset] : null;
+	}
+	
+	/**
+	 * @param offset
+	 * @param value
+	 */
+	public function offsetSet ($offset, $value) {
+		$this->_attr[$offset]  = $value;
+	}
+	
+	/**
+	 * @param offset
+	 */
+	public function offsetUnset ($offset) {
+		unset($this->_attr[$offset]);
+	}
+	
 }
 
-class AESTool{
-
-	/**
-	 * 设置默认的加密key
-	 * @var str
-	 */
-	public static $defaultKey = 'e10adc3949ba59abbe56e057f20f883e';
+class RPGPersonUnit extends \UnitBase{
 	
-	public $secretKey = '';
-
-	/**
-	 * 设置默认加密向量
-	 * @var str
-	 */
-	private $iv = 'e10adc3949ba59a1';
-	 
-	/**
-	 * 设置加密算法
-	 * @var str
-	 */
-	private $cipher;
-	 
-	/**
-	 * 设置加密模式
-	 * @var str
-	 */
-	private $mode;
-	 
-	public function __construct($cipher = MCRYPT_RIJNDAEL_128, $mode = MCRYPT_MODE_CBC){
-		$this->cipher = $cipher;
-		$this->mode = $mode;
-	}
-	
-	public function setSecretKey($key){
-		$this->secretKey = md5($key) ;
-	}
-	
-	public function getSecretKey(){
-		return $this->secretKey ? $this->secretKey : static::$defaultKey;
-	}
-	
-	 
-	/**
-	 * 对内容加密，注意此加密方法中先对内容使用padding pkcs7，然后再加密。
-	 * @param str $content    需要加密的内容
-	 * @return str 加密后的密文
-	 */
-	public function encrypt($content){
-		if(empty($content)){
-			return false;
-		}
-		$srcdata = $content;
-		$block_size = mcrypt_get_block_size($this->cipher, $this->mode);
-		$padding_char = $block_size - (strlen($content) % $block_size);
-		$srcdata .= str_repeat(chr($padding_char),$padding_char);
-		$resultData =  mcrypt_encrypt($this->cipher, $this->getSecretKey(), $srcdata, $this->mode, $this->iv);
-		return base64_encode($resultData);
-	}
-
-	/**
-	 * 对内容解密，注意此加密方法中先对内容解密。再对解密的内容使用padding pkcs7去除特殊字符。
-	 * @param String $content    需要解密的内容
-	 * @return String 解密后的内容
-	 */
-	public function decrypt($content){
-		if(empty($content)){
-			return false;
-		}
-		$content = base64_decode($content);
-		if($content === false) {
-			throw new \Exception('Failed To Decode Received Data Using base64_decode');
-		}
-		$content = mcrypt_decrypt($this->cipher, $this->getSecretKey(), $content, $this->mode, $this->iv);
-		$block = mcrypt_get_block_size($this->cipher, $this->mode);
-		$pad = ord($content[($len = strlen($content)) - 1]);
-		return substr($content, 0, strlen($content) - $pad);
-	}
 }
 
-
-
-/*
- * |--------------------------------------------------------------------------
- * | Application Helpers
- * |--------------------------------------------------------------------------
- * |
- * | Here is where you can register all of the Helpers for an application.
- * |
- */
-
-
-class RsaTool {
+class RPGCommon {
 	
-	/**
-	 * 我的私钥
-	 * @var unknown
-	 */
-	private $_privKey;
-	/**
-	 * client公钥
-	 * @var unknown
-	 */
-	private $_client_pubKey;
-	
-	private $_privPath;
-	private $_pubPath;
-	
-	
-	/**
-	 * 
-	 * @param unknown $path1
-	 * 	privKeyPath Or KeyBasePath
-	 * @param string $path2
-	 * 	pubKeyPath 
-	 * @throws \Exception
-	 */
-	public function __construct($path1,$path2 = '' ) {
-		if (empty ( $path1 ) ) {
-			throw new \Exception ( 'Key Set Path Is Required' );
-		}
-		if( is_dir ( $path1 )){
-			$this->_privPath = $path1. DIRECTORY_SEPARATOR . 'priv.pem';
-			$this->_pubPath = $path1. DIRECTORY_SEPARATOR . 'cli-pub.pem';
-		}else if ( is_file( $path1 ) && is_file( $path2 ) ){
-			$this->_privPath = $path1;
-			$this->_pubPath = $path2;
-		}else{
-			throw new \Exception ( 'Valid Path Or File Is Required' );
-		}
+	public static function trace($msg){
+		static $_trace = [];
+		
+		$_trace[] = $msg;
 	}
-
-	/**
-	 * Create New RAS Keys
-	 * @return multitype:unknown
-	 */
-	public static function createKey($privKeyPath,$pubKeyPath) {
-		$r = openssl_pkey_new ([
-				'private_key_bits' => 1024,
-				'private_key_type' => OPENSSL_KEYTYPE_RSA,
-		]);
-		openssl_pkey_export ( $r, $privKey );
-		file_put_contents ( $privKeyPath, $privKey );
-		$rp = openssl_pkey_get_details ( $r );
-		$pubKey = $rp ['key'];
-		file_put_contents ( $pubKeyPath, $pubKey );
-		return [
-				'privKey' => $privKey,
-				'pubKey' => $pubKey,
-		];
+	
+	
+	public static function getGCD($a,$b){
+		$big = $a > $b ? $a : $b;
+		$small = $a >= $b ? $b : $a;
+		$mod = $big%$small ;
+		while ($mod > 0 ){
+			$big = $small;
+			$small = $mod;
+			$mod = $big%$small ;
+		}
+		return $small;
+	}
+	
+	public static function battle2(\UnitBase $ua,\UnitBase $ub){
+		$aSpeed = intval($ua['attack speed'] * 100) ;
+		$bSpeed = intval($ub['attack speed'] * 100) ;
+		
+		$step = \RPGCommon::getGCD($aSpeed, $bSpeed);
+		
+		$timeLine = 0;
+		
+		while($ua->alive() && $ub->alive()){
+			$timeLine += $step;
+			if($timeLine % $aSpeed == 0){
+				$damage = static::attack($ua, $ub);
+			}
+			if(! ($ua->alive() && $ub->alive() ) ){
+				break;
+			}
+			if($timeLine % $bSpeed == 0){
+				$damage = static::attack($ub, $ua);
+			}
+		}
+		exit;
+		
+	}
+	
+	
+	public static function multiple_time($time,callable $call,$param){
+		$result = [];
+		for($i = 0 ; $i < $time ;$i ++ ){
+			$rt = call_user_func_array($call, $param);
+			$rt = 'H '.$rt;
+			if(isset($result[$rt])){
+				$result[ $rt ] ++;
+			}else{
+				$result[ $rt ] = 1;
+			}
+		}
+		return $result;
 	}
 	
 	/**
-	 * Set Client Public Key 
-	 * @param unknown $data
-	 * @throws \Exception
+	 * Determine whether you hit the rate or not 
+	 * @param float $rate
+	 * rate (0-100)
 	 * @return boolean
 	 */
-	public function setupClientPubKey($data){
-		if (is_resource ( $this->_client_pubKey)) {
+	public static function hitRandom($rate){
+		if($rate >= 100) return true;
+		$max = $rate * 1000000;
+		if(mt_rand(1,100000000) <= $max){
 			return true;
 		}
-		if(is_string($data)){
-			if(is_file($data)){
-				$prk = file_get_contents ( $data );
-				$this->_client_pubKey = openssl_pkey_get_public( $prk );
-			}else{
-				$this->_client_pubKey = openssl_pkey_get_public( $data );
-			}
-			return true;
-		}
-		throw new \Exception(__FUNCTION__.' expects Parameter 1 to be string');
-	}
-	
-	
-	/**
-	 * setup the private key
-	 */
-	public function setupPrivKey() {
-		if (is_resource ( $this->_privKey )) {
-			return true;
-		}
-		$prk = file_get_contents ( $this->_privPath );
-		$this->_privKey = openssl_pkey_get_private ( $prk );
-		return true;
-	}
-	/**
-	 * setup the public key
-	 */
-	public function setupPubKey() {
-		if (is_resource ( $this->_client_pubKey )) {
-			return true;
-		}
-		$puk = file_get_contents ( $this->_pubPath );
-		$this->_client_pubKey = openssl_pkey_get_public ( $puk );
-		return true;
-	}
-	
-	
-	protected function encrypt($data, $key, $type) {
-		if (! is_string ( $data )) {
-			throw new \Exception ( 'String Is Needed!' );
-		}
-		if ($type == 'PRIVATE') {
-			$r = openssl_private_encrypt ( $data, $encrypted, $key );
-		} else {
-			$r = openssl_public_encrypt ( $data, $encrypted, $key );
-		}
-		if ($r) {
-			return base64_encode ( $encrypted );
-		} else {
-			throw new \Exception ( openssl_error_string () );
-		}
+		return false;
 	}
 	
 	/**
-	 * decrypt with the private key
+	 * Calculate hit rate
+	 * @param float $miss
+	 * 	miss rate
+	 * @param float $dodge
+	 *  dodge rate
+	 * @return <b>number</b> float from 0 to 100 
 	 */
-	protected  function decrypt($encrypted,$key,$type) {
-		if (! is_string ( $encrypted )) {
-			throw new \Exception ( 'String Is Needed!' );
+	public static function hitRate($miss,$dodge){
+			
+		return 100 - ($miss * $dodge / 100 + $dodge ) ;//100 - 100 * $miss * $dodge /10000.0 ;
+	}
+	
+	
+	public static function critHit($critRate){
+		$multiple = 1;
+		if(static::hitRandom($critRate)){
+			$multiple = 2;
 		}
-		$encrypted = base64_decode ( $encrypted );
-		if ($type == 'PRIVATE') {
-			$r = openssl_private_decrypt ( $encrypted, $decrypted, $key );
-		} else {
-			$r = openssl_public_decrypt( $encrypted, $decrypted, $key );
+		if(static::hitRandom($critRate * $critRate /100)){
+			$multiple = 3;
 		}
+		if(static::hitRandom($critRate * $critRate * $critRate /10000)){
+			$multiple = 4;
+		}
+		if(static::hitRandom($critRate * $critRate * $critRate * $critRate /1000000)){
+			$multiple = 5;
+		}
+		return $multiple;
+	}
+	
+	/**
+	 * Calculate attack damage
+	 * @param \UnitBase $attacker
+	 * @param \UnitBase $defender
+	 * @return number
+	 */
+	public static function attack(\UnitBase $attacker ,\UnitBase $defender){
+		$def 	 = $defender['defence'];
+		$atk 	 = $attacker['attack'];
+		$miss 	 = $attacker['miss rate'];
+		$dodge 	 = $defender['dodge rate'];
+		$hitRate = static::hitRate($miss,$dodge);
+		$damage  = 0;
 		
-		if ($r) {
-			return $decrypted;
-		} else {
-			throw new \Exception ( openssl_error_string () );
-		}
-	}
-	
-	
-	/**
-	 * encrypt with the private key
-	 */
-	public function privEncrypt($data) {
-		$this->setupPrivKey ();
-		return $this->encrypt($data, $this->_privKey, 'PRIVATE');
-	}
-	/**
-	 * decrypt with the private key
-	 */
-	public function privDecrypt($encrypted) {
-		$this->setupPrivKey ();
-		return $this->decrypt($encrypted, $this->_privKey, 'PRIVATE');
-	}
-	
-	/**
-	 * encrypt with public key
-	 */
-	public function pubEncrypt($data) {
-		$this->setupPubKey ();
-		return $this->encrypt($data, $this->_client_pubKey, 'PUBLIC');
-	}
-	
-	/**
-	 * * decrypt with the public key
-	 */
-	public function pubDecrypt($crypted) {
-		$this->setupPubKey ();
-		return $this->decrypt($crypted, $this->_client_pubKey, 'PUBLIC');
-	}
-	
-	/**
-	 * 生成签名
-	 *
-	 * @param string 签名材料
-	 * @param string 签名编码（base64）
-	 * @return 签名值
-	 */
-	public function sign($data){
-		$ret = false;
-		$this->setupPrivKey();
-		if (openssl_sign($data, $ret, $this->_privKey)){
-			$ret = base64_encode($ret);
-		}
-		return $ret;
-	}
-	
-	/**
-	 * 验证签名
-	 *
-	 * @param string 签名材料
-	 * @param string 签名值
-	 * @param string 签名编码（base64/hex/bin）
-	 * @return bool
-	 */
-	public function verify($data, $sign){
-		$ret = false;
-		$this->setupPubKey();
-		$sign = base64_decode($sign);
-		if ($sign !== false) {
-			switch (openssl_verify($data, $sign, $this->_client_pubKey)){
-				case 1: $ret = true; break;
-				case 0:
-				case -1:
-				default: $ret = false;
-			}
-		}
-		return $ret;
-	}
-	
-	public function __destruct() {
-		@ fclose ( $this->_privKey );
-		@ fclose ( $this->_client_pubKey );
-	}
-}
-
-
-class RsaWorker{
-	
-	private $AES ;
-	private $AES_secret ;
-	
-	private $RSA ;
-	
-	private $privKeyPath;
-	private $pubKeyPath;
-	
-	public function __construct($privKeyPath , $pubKeyPath){
-		$this->AES = new \AESTool();
-		$this->init($privKeyPath,$pubKeyPath);
-	}
-	
-	public function sendData ($data){
-		$data_string = \CommonTool::dataProcess($data);
-		\CommonTool::log('data_string',$data_string);
-		$this->AES_secret = \CommonTool::createNonceStr(6);
-		\CommonTool::log('AES_secret',$this->AES_secret);
-		$this->AES->setSecretKey($this->AES_secret);
-		$encrypted_data 	= $this->AES->encrypt($data_string);
-		\CommonTool::log('encrypted_data',$encrypted_data);
-		$sendData ['data'] 	= $encrypted_data;
-		$sendData ['key'] 	= $this->RSA->pubEncrypt($this->AES_secret);
-		$sendData ['signature'] = $this->RSA->sign($encrypted_data);
-		//TODO :digital signature
-		return $sendData;
-	}
-	
-	public function receiveData (array $sendData){
-		$data_struct = ['data','key','signature'];
-		if(array_diff($data_struct, array_keys($sendData))){
-			throw new \Exception('Data Structure Error');
-		}
-		try {
-			$AES_secret = $this->RSA->privDecrypt($sendData['key']);
-			\CommonTool::log('AES_secret',$AES_secret);
-		}catch(\Exception $e){
-			throw new \Exception('Failed To Decode AES Secret');
-		}
-		if($this->RSA->verify($sendData['data'], $sendData['signature']) === false){
-			throw new \Exception('Check Signature Failed');
-		}
-		$this->AES_secret = $AES_secret;
-		$this->AES->setSecretKey($this->AES_secret );
-		$data = $this->AES->decrypt($sendData['data']);
-		\CommonTool::log('decrypted_data',$data);
-		$data = json_decode($data,true);
-		if(json_last_error() == JSON_ERROR_NONE){
-			if(\CommonTool::checkSummary($data)){
-				return $data;
-			}
-			throw new \Exception('CheckSignature Failed');
+		$msg 	 = [];
+		$msg ['title']  = $attacker->getName().' attack '.$defender->getName();
+		if(static::hitRandom($hitRate) > 0 ){
+			$multiple = 1;
+			$msg ['hit']  =  'Hit';
+			$multiple = static ::critHit($attacker['crit rate']);
+			$multiple > 1 && $msg ['hit'] = 'Crit Hit '.($multiple - 1);
+			$damage = $multiple * $atk * (1 - ($def * 0.06 ) / ($def * 0.06 + 1 )  ) ;
+			$damage = bcmul ( $damage, 1, 4);
 		}else{
-			throw new \Exception('Received Data json_decode Failed');
+			$msg ['hit']  =  'Miss';
 		}
-	}
-	
-	public function init($privKeyPath,$pubKeyPath){
-		$this->privKeyPath = $privKeyPath;
-		$this->pubKeyPath = $pubKeyPath;
-		if(!is_file($this->privKeyPath) || !is_file($this->pubKeyPath) ){
-			throw new \Exception('Can\'t Find Private Key Or Public Key!');
-		}
-		$this->RSA = new \RsaTool ( $this->privKeyPath,$this->pubKeyPath);
+		$msg ['damage']  = $damage;
+		echo "{$msg['title']} , {$msg['hit']} ". ($msg ['damage'] ? ' '.$msg ['damage'] : '').PHP_EOL;
+		//Miss
+		//Crit
+		$damage > 0 && $defender->injured($damage);
+		return $damage;
 	}
 }
 
