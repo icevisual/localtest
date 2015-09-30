@@ -34,6 +34,7 @@ class Fun {
 				}
 				self::resize($imgPath, $path, $maxSize);
 			}catch (\Exception $e){
+				\Log::error($e);
 				return false;
 			}
 			return $path;
@@ -155,7 +156,7 @@ class Fun {
 
 	/**
 	 * 获取文件类型
-	 * @param unknown $filename
+	 *  @param unknown $filename
 	 * @return string
 	 */
 	public static function file_type($filename) {

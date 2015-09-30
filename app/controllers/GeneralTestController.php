@@ -117,16 +117,15 @@ class GeneralTestController extends \BaseController {
 	}
 	
 	public function test() {
-
 // 		$critRate = 0.1;
 // // 		\RPGCommon::critHit($critRate);
 // // 		$res = \RPGCommon::multiple_time(10000,'\RPGCommon::critHit',[$critRate]);
 // 		$res = \RPGCommon::multiple_time(10000,'\RPGCommon::hitRandom',[$critRate]);
 // 		edump($res);
-		
+		\Log::error('asd');
 		$dataA = [
 				'HP' => 1200,
-				'attack' => 130,
+				'attack' => 67,
 				'defence' => 8,//伤害减少 （装甲值 * 0.06）／（装甲值 * 0.06 ＋ 1） 
 				'miss rate'	=> 10, //攻击丢失率
 				'crit rate'	=> 7, //暴击率
@@ -136,7 +135,7 @@ class GeneralTestController extends \BaseController {
 		
 		$dataB = [
 				'HP' => 1000,
-				'attack' => 100,
+				'attack' => 49,
 				'defence' => 10,//伤害减少 （装甲值 * 0.06）／（装甲值 * 0.06 ＋ 1）
 				'miss rate'	=> 5,
 				'crit rate'	=> 5,

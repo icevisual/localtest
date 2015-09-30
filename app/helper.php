@@ -204,6 +204,7 @@ class RPGCommon {
 		$multiple = 1;
 		if(static::hitRandom($critRate)){
 			$multiple = 2;
+			$critRate = $critRate * 1.25;
 		}
 		if(static::hitRandom($critRate * $critRate /100)){
 			$multiple = 3;
