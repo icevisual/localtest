@@ -43,7 +43,8 @@
 			<button class="btn dropdown-toggle clearfix btn-hg btn-primary"
 				data-toggle="dropdown">
 				<span class="filter-option pull-left action_uri">ACTION URI</span>&nbsp;<span
-					class="caret"></span> <input type="hidden" value="" id="action_uri" />
+					class="caret"></span> 
+					<input type="hidden" value="" id="action_uri" />
 			</button>
 			<i class="dropdown-arrow dropdown-arrow-inverse"></i>
 			<ul class="dropdown-menu dropdown-inverse" role="menu"

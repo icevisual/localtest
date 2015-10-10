@@ -10,6 +10,24 @@ use Illuminate\Mail\Message;
 
 class Fun {
 	
+	
+	/**
+	 * 将金额平分，保留2位小数，返回数组，最后一位补差额
+	 * @param unknown $price
+	 * @param unknown $period
+	 * @return array
+	 */
+	public static function  divide_equally($price,$period){
+		$each = bcmul ( $price / $period, 1, 2 );
+		$result = array_fill(0, $period, floatval($each));
+		if($period > 1 ){
+			$result[$period - 1 ] =  $price - $each * ($period - 1);
+		}
+		return  $result;
+	}
+	
+	
+	
 	/**
 	 * 生成等比缩略图
 	 * @param unknown $imgPath

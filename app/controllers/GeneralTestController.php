@@ -15,6 +15,7 @@ use Illuminate\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Intervention\Image\Facades\Image;
 use Ser\Sms\SmsService;
+use Lib\Fun\Calculation;
 class GeneralTestController extends \BaseController {
 	public function returnDate() {
 		exit ( json_encode ( [ 
@@ -116,17 +117,89 @@ class GeneralTestController extends \BaseController {
 		edump($res);
 	}
 	
+	
+	public function nostr($length = 16){
+		$chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+		$str = "";
+		for($i = 0; $i < $length; $i ++) {
+			$str .= $chars{mt_rand ( 0, 61 )};
+		}
+		dump($str); ;
+	}
+	public function test11(){
+		function _invokeMethod($class,$method,$params){
+			echo __LINE__.'Invoke<br/>';
+		};
+		$invokeMethod = function ($class,$method,$params){
+			echo __LINE__.'Invoke<br/>';
+		};
+		
+		edump(get_defined_functions());
+		
+		edump(get_defined_vars());
+		
+		$ReflectionObject = new ReflectionFunction($invokeMethod);
+		dump($ReflectionObject->getName());
+		dump($ReflectionObject->getClosure());
+		$ReflectionObject->invoke(1,2,3);
+		$invokeMethod(1,2,3);
+		edump_object_name($invokeMethod);
+		
+		
+		edump(getInvokeMethodArray('\CommonTool','createNonceStr1'));
+		call_user_func_array(getInvokeMethodArray('\CommonTool','createNonceStr'), [16]);
+		
+		exit;
+		
+		
+		// $func = 'endWith';
+		$func = 'createNonceStr1';
+		$xAxis = range ( 0, 100 );
+		$params = [];
+		foreach ( $xAxis as $v ) {
+			$params [] = 99999;
+		}
+		return statisticsExecTime ( $func, $params, $xAxis );
+		
+		
+		
+		
+		$ds = PointsV2::data_source();
+		
+		foreach ($ds as $k1 => $v1){
+			foreach ($v1 as $k2 => $v2){
+				foreach ($v2 as $k3 => $v3){
+					echo "\$data[$k1][$k2][$k3]\t= ";
+					$v3[3] = $k1 + $v3[1] ;
+					$v3[2] = $k1  ;
+					$v3[4] = divPeriodPrice($v3[3],$k2); ;
+					echoArray($v3);
+					echo ';<br/>';
+				}
+			}
+		}
+		
+		
+		
+		exit;
+		
+		
+	}
+	
+	
 	public function test() {
+		
+// 		$this->test1();
+		
 // 		$critRate = 0.1;
 // // 		\RPGCommon::critHit($critRate);
 // // 		$res = \RPGCommon::multiple_time(10000,'\RPGCommon::critHit',[$critRate]);
 // 		$res = \RPGCommon::multiple_time(10000,'\RPGCommon::hitRandom',[$critRate]);
 // 		edump($res);
-		\Log::error('asd');
 		$dataA = [
 				'HP' => 1200,
 				'attack' => 67,
-				'defence' => 8,//伤害减少 （装甲值 * 0.06）／（装甲值 * 0.06 ＋ 1） 
+				'defence' => 2,//伤害减少 （装甲值 * 0.06）／（装甲值 * 0.06 ＋ 1） 
 				'miss rate'	=> 10, //攻击丢失率
 				'crit rate'	=> 7, //暴击率
 				'dodge rate' => 1, //闪避率
@@ -136,7 +209,7 @@ class GeneralTestController extends \BaseController {
 		$dataB = [
 				'HP' => 1000,
 				'attack' => 49,
-				'defence' => 10,//伤害减少 （装甲值 * 0.06）／（装甲值 * 0.06 ＋ 1）
+				'defence' => 5,//伤害减少 （装甲值 * 0.06）／（装甲值 * 0.06 ＋ 1）
 				'miss rate'	=> 5,
 				'crit rate'	=> 5,
 				'dodge rate' => 5,

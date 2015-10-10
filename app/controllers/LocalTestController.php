@@ -208,7 +208,6 @@ class LocalTestController extends \BaseController
 	
 	
     public function index(){
-
     	//获取接口调用频度
     	$dir 	  		= 'logs';
     	$fileName 		= 'ReqLogs';
