@@ -21,4 +21,6 @@ echo %str:速度=sadasd%
 　　echo 文件属性：%~a0
 　　echo 修改时间：%~t0
 　　echo 文件大小：%~z0
+
+
 echo 输出完毕，按任意键退出&&pause>nul&&exit
