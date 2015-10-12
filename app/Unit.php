@@ -1,4 +1,5 @@
 <?php
+use Lib\Fun\Calculation;
 class UnitBase implements ArrayAccess{
 
 	protected  $_attr ;
@@ -9,7 +10,7 @@ class UnitBase implements ArrayAccess{
 			'HP' => 100,
 			'attack' => 1,
 			'defence' => 1,//伤害减少 （装甲值 * 0.06）／（装甲值 * 0.06 ＋ 1）
-			'miss rate'	=> 10, //攻击丢失率
+			'hit rate'	=> 10, //攻击命中率
 			'crit rate'	=> 1, //暴击率
 			'dodge rate' => 1, //闪避率
 			'attack speed' => 1, //attack 1 time  per second
@@ -153,16 +154,47 @@ class RPGCommon {
 	}
 
 
-	public static function multiple_time($time,callable $call,$param){
+
+	/**
+	 * 
+	 * @param unknown $time
+	 * 	执行次数
+	 * @param callable $call
+	 * 	回调
+	 * @param unknown $param
+	 * 	参数
+	 * @param string $each
+	 * 	是否指定每次的参数
+	 * @throws \Exception
+	 * @return multitype:number
+	 */
+	public static function multiple_call($time,callable $call,$param,$each = false){
 		$result = [];
+		if($each){
+			if(count($param) != $time){
+				throw new \Exception('Params Number Do Not Match!');
+			}
+		}
 		for($i = 0 ; $i < $time ;$i ++ ){
-			$rt = call_user_func_array($call, $param);
+			$rt = call_user_func_array($call, (array)($each ? $param[$i] : $param));
+			$rt = is_array($rt) ? json_encode($rt) : $rt;
+// 			if(!is_string($rt)){
+// 				throw new \Exception('Params Number Do Not Match!');
+// 			}
 			$rt = 'H '.$rt;
 			if(isset($result[$rt])){
 				$result[ $rt ] ++;
 			}else{
 				$result[ $rt ] = 1;
 			}
+		}
+		ksort($result);
+		$tlen = strlen($time.'');
+		foreach ($result as $k => $v){
+			$left = str_pad($v, $tlen,' ',STR_PAD_LEFT);
+			$right = bcdiv($v * 100, $time,4).'%';
+			$right = str_pad($right, 8,' ',STR_PAD_LEFT);
+			$result[$k] =  $left.' '.$right;
 		}
 		return $result;
 	}
@@ -200,7 +232,7 @@ class RPGCommon {
 		$multiple = 1;
 		if(static::hitRandom($critRate)){
 			$multiple = 2;
-			$critRate = $critRate * 1.25;
+// 			$critRate = $critRate * 1.25;
 		}
 		if(static::hitRandom($critRate * $critRate /100)){
 			$multiple = 3;
@@ -223,7 +255,7 @@ class RPGCommon {
 	public static function attack(\UnitBase $attacker ,\UnitBase $defender){
 		$def 	 = $defender['defence'];
 		$atk 	 = $attacker['attack'];
-		$miss 	 = $attacker['miss rate'];
+		$miss 	 = 100 - $attacker['hit rate'];
 		$dodge 	 = $defender['dodge rate'];
 		$hitRate = static::hitRate($miss,$dodge);
 		$damage  = 0;

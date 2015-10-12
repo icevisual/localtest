@@ -179,16 +179,36 @@ class GeneralTestController extends \BaseController {
 			}
 		}
 		
-		
+		$ds = PointsV2::data_source();
+		//[33.41,1.11,98.89,[100.00]];
+		foreach ($ds as $k1 => $v1){
+			foreach ($v1 as $k2 => $v2){
+				foreach ($v2 as $k3 => $v3){
+					echo "\$data[$k1][$k2][$k3]\t= ";
+					$v3[3] = $k1;// + $v3[1] ;
+					// 					$v3[2] = $k1  ;
+					$v3[4] = divide_equally($v3[3],$k2); ;
+					echoArray($v3);
+					echo ';<br/>';
+				}
+			}
+		}
 		
 		exit;
-		
-		
 	}
 	
 	
 	public function test() {
 		
+		header('Content-type:text/html;charset=gbk');
+		$res = system('for /f "eol= delims== tokens=1,2 usebackq" %i in (`set`) do @echo %i = %j',$return);
+		dump($res);
+		edump($return);
+		//量变模型，本质剖析，无限进化。极限突破
+		//质变模型
+// 		$res = \RPGCommon::multiple_call(100000, '\RPGCommon::critHit', 10);
+// 		dump($res);
+// 		exit;
 // 		$this->test1();
 		
 // 		$critRate = 0.1;
@@ -200,7 +220,7 @@ class GeneralTestController extends \BaseController {
 				'HP' => 1200,
 				'attack' => 67,
 				'defence' => 2,//伤害减少 （装甲值 * 0.06）／（装甲值 * 0.06 ＋ 1） 
-				'miss rate'	=> 10, //攻击丢失率
+				'hit rate'	=> 90, //攻击丢失率
 				'crit rate'	=> 7, //暴击率
 				'dodge rate' => 1, //闪避率
 				'attack speed' => 1.5, //attack 1 time after 1.5 second
@@ -210,7 +230,7 @@ class GeneralTestController extends \BaseController {
 				'HP' => 1000,
 				'attack' => 49,
 				'defence' => 5,//伤害减少 （装甲值 * 0.06）／（装甲值 * 0.06 ＋ 1）
-				'miss rate'	=> 5,
+				'hit rate'	=> 95,
 				'crit rate'	=> 5,
 				'dodge rate' => 5,
 				'attack speed' => 1, //attack 1 time  per second
