@@ -777,7 +777,7 @@ BEGIN
 		_key_5 VARCHAR(100) NULL ,
 		_key_6 VARCHAR(100) NULL ,
 		PRIMARY KEY(id)
-	);
+	) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='ÁÙÊ±±í';
 	_cur_loop:LOOP
 		IF _i = _max THEN
 			LEAVE _cur_loop;
@@ -797,6 +797,7 @@ CALL __destory_tmp();
 
 SELECT * FROM __tmp;
 
+SELECT database();
 
 DROP PROCEDURE IF EXISTS `proc`;
 CREATE PROCEDURE `proc` (
@@ -813,7 +814,7 @@ BEGIN
 	DECLARE _i int ; 
 	
 	declare cur_test CURSOR for 
-		SELECT COLUMN_NAME FROM information_schema.`COLUMNS` WHERE TABLE_SCHEMA = 'gzb_ol_0824' AND table_name = _in_table_name;
+		SELECT COLUMN_NAME FROM information_schema.`COLUMNS` WHERE TABLE_SCHEMA = DATABASE() AND table_name = _in_table_name;
   declare continue handler FOR SQLSTATE '02000' SET done = 1;  
 
 	set _i = 0 ;
@@ -828,14 +829,14 @@ BEGIN
 			SET _i = _i + 1; 
 
 
-			SET @sql = CONCAT('SELECT `',_COLUMN_NAME,'` INTO @dt FROM gzb_user_info WHERE `name` > "" limit 1 ;');
+			SET @sql = CONCAT('SELECT `',_COLUMN_NAME,'` INTO @dt FROM ',_in_table_name,' WHERE `name` > "" limit 1 ;');
 			##INSERT INTO `__tmp` (_key)VALUES(_COLUMN_NAME);
 			prepare stmt from @sql; 
 			EXECUTE stmt;     
 			deallocate prepare stmt;  
 			
 			IF @dt is NULL THEN
-				SET @dt = 0;
+				SET @dt = 'NULL';
 			END IF;
 
 			##SET _RESULT = CONCAT(_RESULT,',',_COLUMN_NAME);
@@ -852,7 +853,7 @@ BEGIN
   SELECT _i;
 	SELECT * FROM `__tmp`;
 END;
-CALL proc('gzb_user_info','_key_3');
+CALL proc('gzb_user_info','_key_2');
 
 show variables like '%char%'
 
