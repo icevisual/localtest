@@ -750,6 +750,14 @@ SELECT * FROM information_schema.`COLUMNS` WHERE TABLE_SCHEMA = 'gzb_ol_0824' AN
 
 CALL select_info('phone','18767135799');
 
+=========================================================================================================
+
+
+DROP PROCEDURE IF EXISTS `__destory_tmp`;
+CREATE PROCEDURE `__destory_tmp` ()
+BEGIN
+	DROP TABLE IF EXISTS `__tmp`;
+END
 
 
 DROP PROCEDURE IF EXISTS `__init_tmp`;
@@ -781,6 +789,12 @@ BEGIN
 END
 
 CALL __init_tmp();
+
+
+SELECT * FROM __tmp;
+
+CALL __destory_tmp();
+
 SELECT * FROM __tmp;
 
 
@@ -812,8 +826,20 @@ BEGIN
 			LEAVE _cur_loop;
 		ELSE
 			SET _i = _i + 1; 
+
+
+			SET @sql = CONCAT('SELECT `',_COLUMN_NAME,'` INTO @dt FROM gzb_user_info WHERE `name` > "" limit 1 ;');
+			##INSERT INTO `__tmp` (_key)VALUES(_COLUMN_NAME);
+			prepare stmt from @sql; 
+			EXECUTE stmt;     
+			deallocate prepare stmt;  
+			
+			IF @dt is NULL THEN
+				SET @dt = 0;
+			END IF;
+
 			##SET _RESULT = CONCAT(_RESULT,',',_COLUMN_NAME);
-			SET @sql = CONCAT('UPDATE __tmp SET ',_key,'="',_COLUMN_NAME,'" WHERE id = ',_i);
+			SET @sql = CONCAT('UPDATE __tmp SET ',_key,'="',_COLUMN_NAME,'=',@dt,'" WHERE id = ',_i);
 			##INSERT INTO `__tmp` (_key)VALUES(_COLUMN_NAME);
 			prepare stmt from @sql; 
 			EXECUTE stmt;     
@@ -821,17 +847,30 @@ BEGIN
 		END IF;
 	END LOOP;
 	close cur_test;  
-	SET _RESULT = SUBSTR(_RESULT,2);
+	##SET _RESULT = SUBSTR(_RESULT,2);
 	##select _RESULT;  
   SELECT _i;
 	SELECT * FROM `__tmp`;
-	DROP TABLE IF EXISTS `__tmp`;
 END;
-CALL proc('gzb_user_account','_key_3');
+CALL proc('gzb_user_info','_key_3');
 
+show variables like '%char%'
 
+DROP PROCEDURE IF EXISTS `test`;
+CREATE PROCEDURE 	`test`()  
+BEGIN   
+	DECLARE forward_seconds varchar(222);  
 
-
+	#SELECT `name` INTO forward_seconds FROM gzb_user_info WHERE `name` > '' limit 1 ;
+	SELECT forward_seconds;
+	SET @sql = 'SELECT `name` INTO @dt FROM gzb_user_info WHERE `name` > "" limit 1 ;';
+			##INSERT INTO `__tmp` (_key)VALUES(_COLUMN_NAME);
+	prepare stmt from @sql; 
+	EXECUTE stmt;     
+	deallocate prepare stmt;   
+	SELECT @dt;
+END;
+CALL test();
 
 
 
@@ -839,6 +878,7 @@ SELECT * FROM __tmp
 
 SELECT CONCAT('name=',name) AS name FROM gzb_user_info WHERE uid = 18 limit 1
 
+=========================================================================================================
 
 
 SELECT LOCATE('aasd','asdfghjjkl') INTO __tmp;
