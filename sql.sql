@@ -799,6 +799,11 @@ SELECT * FROM __tmp;
 
 SELECT database();
 
+SELECT company,QUOTE(company) FROM gzb_user_info WHERE uid = 105045;
+
+
+
+
 DROP PROCEDURE IF EXISTS `proc`;
 CREATE PROCEDURE `proc` (
 	in _in_table_name VARCHAR (30),
@@ -809,7 +814,6 @@ BEGIN
 	declare _RESULT VARCHAR(255);  
 	declare tbname varchar(20);  
 	declare _COLUMN_NAME VARCHAR(40);
-
 	DECLARE _key VARCHAR(20) ; 
 	DECLARE _i int ; 
 	
@@ -827,10 +831,7 @@ BEGIN
 			LEAVE _cur_loop;
 		ELSE
 			SET _i = _i + 1; 
-
-
 			SET @sql = CONCAT('SELECT `',_COLUMN_NAME,'` INTO @dt FROM ',_in_table_name,' WHERE `name` > "" limit 1 ;');
-			##INSERT INTO `__tmp` (_key)VALUES(_COLUMN_NAME);
 			prepare stmt from @sql; 
 			EXECUTE stmt;     
 			deallocate prepare stmt;  
@@ -838,22 +839,19 @@ BEGIN
 			IF @dt is NULL THEN
 				SET @dt = 'NULL';
 			END IF;
-
-			##SET _RESULT = CONCAT(_RESULT,',',_COLUMN_NAME);
-			SET @sql = CONCAT('UPDATE __tmp SET ',_key,'="',_COLUMN_NAME,'=',@dt,'" WHERE id = ',_i);
-			##INSERT INTO `__tmp` (_key)VALUES(_COLUMN_NAME);
+			SET @value = QUOTE( CONCAT(_COLUMN_NAME,'=',@dt));
+			SET @sql = CONCAT('UPDATE __tmp SET ',_key,'=',@value,' WHERE id = ',_i);
 			prepare stmt from @sql; 
 			EXECUTE stmt;     
 			deallocate prepare stmt;   
 		END IF;
 	END LOOP;
-	close cur_test;  
-	##SET _RESULT = SUBSTR(_RESULT,2);
-	##select _RESULT;  
-  SELECT _i;
+	close cur_test;   
 	SELECT * FROM `__tmp`;
 END;
 CALL proc('gzb_user_info','_key_2');
+
+
 
 show variables like '%char%'
 
