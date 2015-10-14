@@ -622,7 +622,7 @@ DROP VIEW `a_view`
 
 DROP PROCEDURE IF EXISTS `INITBNSTRENDS`;
 
-CREATE DEFINER = `huisou`@`%` PROCEDURE `INITBNSTRENDS`()
+CREATE PROCEDURE `INITBNSTRENDS`()
 BEGIN
 		DECLARE fetchSeqOk BOOLEAN;
 		DECLARE _COM_ID INT;
@@ -751,68 +751,92 @@ SELECT * FROM information_schema.`COLUMNS` WHERE TABLE_SCHEMA = 'gzb_ol_0824' AN
 CALL select_info('phone','18767135799');
 
 =========================================================================================================
+SELECT * FROM __tmp
 
+##__tmp 表的操作
 
-DROP PROCEDURE IF EXISTS `__destory_tmp`;
-CREATE PROCEDURE `__destory_tmp` ()
+DROP PROCEDURE IF EXISTS `__tmp_process`;
+CREATE PROCEDURE `__tmp_process` (
+	IN _in_operation VARCHAR(30)
+)
 BEGIN
-	DROP TABLE IF EXISTS `__tmp`;
+	IF _in_operation = 'DROP' THEN 
+		DROP TABLE IF EXISTS `__tmp`;
+	ELSEIF _in_operation = 'CLEAR' THEN 
+		DELETE FROM __tmp;
+		ALTER TABLE __tmp AUTO_INCREMENT = 1;
+	ELSEIF _in_operation = 'SELECT' THEN 
+		SELECT *  FROM __tmp;
+	ELSEIF _in_operation = 'CREATE' THEN 
+		DROP TABLE IF EXISTS `__tmp`;
+		CREATE TABLE `__tmp`( 
+			id int(11) unsigned NOT NULL AUTO_INCREMENT ,
+			_key_1 VARCHAR(100) NULL ,
+			_key_2 VARCHAR(100) NULL ,
+			_key_3 VARCHAR(100) NULL ,
+			_key_4 VARCHAR(100) NULL ,
+			_key_5 VARCHAR(100) NULL ,
+			_key_6 VARCHAR(100) NULL ,
+			_key_7 VARCHAR(100) NULL ,
+			_key_8 VARCHAR(100) NULL ,
+			_key_9 VARCHAR(100) NULL ,
+			PRIMARY KEY(id)
+		) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='临时表';
+	ELSEIF _in_operation = 'INIT' THEN 
+		BEGIN
+			DECLARE _max int ;
+			DECLARE _i int ;
+	
+			SET _i = 0;
+			SET _max = 30;
+			SET @_sql = 'INSERT INTO __tmp (`_key_1`)VALUES(NULL)';
+			SET _max = _max - 1;
+			_cur_loop:LOOP
+				IF _i = _max THEN
+					LEAVE _cur_loop;
+				ELSE
+					SET _i = _i + 1; 
+					SET @_sql = CONCAT( @_sql ,',(NULL)');
+				END IF;
+			END LOOP;
+			prepare stmt from @_sql; 
+			EXECUTE stmt;     
+			deallocate prepare stmt;   
+		END;
+	END IF;
 END
 
 
-DROP PROCEDURE IF EXISTS `__init_tmp`;
-CREATE PROCEDURE `__init_tmp` ()
-BEGIN
-	DECLARE _max int ;
-	DECLARE _i int ;
-	SET _i = 0;
-	SET _max = 30;
-	DROP TABLE IF EXISTS `__tmp`;
-  CREATE TABLE `__tmp`( 
-		id int(11) unsigned NOT NULL AUTO_INCREMENT ,
-		_key_1 VARCHAR(100) NULL ,
-		_key_2 VARCHAR(100) NULL ,
-		_key_3 VARCHAR(100) NULL ,
-		_key_4 VARCHAR(100) NULL ,
-		_key_5 VARCHAR(100) NULL ,
-		_key_6 VARCHAR(100) NULL ,
-		PRIMARY KEY(id)
-	) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='临时表';
-	_cur_loop:LOOP
-		IF _i = _max THEN
-			LEAVE _cur_loop;
-		ELSE
-			SET _i = _i + 1; 
-			INSERT INTO __tmp (`id`)VALUES(_i);
-		END IF;
-	END LOOP;
-END
+SELECT SUBSTRING('asd',0,-1)
 
-CALL __init_tmp();
+SELECT SUBSTR('asd',-1,0)
 
 
-SELECT * FROM __tmp;
+CALL __tmp_process('INIT');
 
-CALL __destory_tmp();
+CALL __tmp_process('DROP');
 
-SELECT * FROM __tmp;
+CALL __tmp_process('CREATE');
+
+CALL __tmp_process('SELECT');
+
+CALL __tmp_process('CLEAR');
 
 SELECT database();
 
 SELECT company,QUOTE(company) FROM gzb_user_info WHERE uid = 105045;
 
+SELECT company FROM gzb_user_info WHERE uid = 105045;
 
 
-
-DROP PROCEDURE IF EXISTS `proc`;
-CREATE PROCEDURE `proc` (
+##将临时表一行写入tmp表的一列
+DROP PROCEDURE IF EXISTS `__tmp_table_select_first`;
+CREATE PROCEDURE `__tmp_table_select_first` (
 	in _in_table_name VARCHAR (30),
 	in _in_key_name VARCHAR (30)
 )
 BEGIN
 	declare done int;  
-	declare _RESULT VARCHAR(255);  
-	declare tbname varchar(20);  
 	declare _COLUMN_NAME VARCHAR(40);
 	DECLARE _key VARCHAR(20) ; 
 	DECLARE _i int ; 
@@ -822,7 +846,6 @@ BEGIN
   declare continue handler FOR SQLSTATE '02000' SET done = 1;  
 
 	set _i = 0 ;
-	SET _RESULT = '';
 	SET _key = _in_key_name;
 	OPEN cur_test;
 	_cur_loop:LOOP
@@ -831,7 +854,7 @@ BEGIN
 			LEAVE _cur_loop;
 		ELSE
 			SET _i = _i + 1; 
-			SET @sql = CONCAT('SELECT `',_COLUMN_NAME,'` INTO @dt FROM ',_in_table_name,' WHERE `name` > "" limit 1 ;');
+			SET @sql = CONCAT('SELECT `',_COLUMN_NAME,'` INTO @dt FROM ',_in_table_name,' limit 1 ');
 			prepare stmt from @sql; 
 			EXECUTE stmt;     
 			deallocate prepare stmt;  
@@ -847,9 +870,52 @@ BEGIN
 		END IF;
 	END LOOP;
 	close cur_test;   
-	SELECT * FROM `__tmp`;
 END;
-CALL proc('gzb_user_info','_key_2');
+
+
+
+CALL __tmp_table_select_first('gzb_user_info','_key_2');
+
+
+
+DROP PROCEDURE IF EXISTS `test`;
+CREATE PROCEDURE 	`test`(
+	IN _in_uid int 
+)  
+BEGIN   
+	CALL __tmp_process('CREATE');
+	CALL __tmp_process('INIT');
+	DROP VIEW IF EXISTS `__tmp_select_01`;
+	SET @sql = CONCAT('CREATE VIEW __tmp_select_01 AS SELECT * FROM gzb_user_info WHERE uid = ',_in_uid);
+	prepare stmt from @sql; 
+	EXECUTE stmt;      
+	CALL __tmp_table_select_first('__tmp_select_01','_key_1');
+
+	DROP VIEW IF EXISTS `__tmp_select_01`;
+	SET @sql = CONCAT('CREATE VIEW __tmp_select_01 AS SELECT * FROM gzb_user_account WHERE uid = ',_in_uid);
+	prepare stmt from @sql; 
+	EXECUTE stmt;     
+	CALL __tmp_table_select_first('__tmp_select_01','_key_2');
+
+	DROP VIEW IF EXISTS `__tmp_select_01`;
+	SET @sql = CONCAT('CREATE VIEW __tmp_select_01 AS SELECT * FROM gzb_user_address WHERE type = 1 AND uid =',_in_uid);
+	prepare stmt from @sql; 
+	EXECUTE stmt;     
+	deallocate prepare stmt; 
+	CALL __tmp_table_select_first('__tmp_select_01','_key_3');
+	DROP VIEW IF EXISTS `__tmp_select_01`;
+	CALL __tmp_process('SELECT');
+END;
+
+CALL test(105045);
+
+
+SET @sql = 'SELECT `name` INTO @dt FROM gzb_user_info WHERE `name` > "" limit 1 ;';
+			##INSERT INTO `__tmp` (_key)VALUES(_COLUMN_NAME);
+	prepare stmt from @sql; 
+	EXECUTE stmt;     
+	deallocate prepare stmt;   
+	SELECT @dt;
 
 
 
