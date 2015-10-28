@@ -1,11 +1,26 @@
 <?php
 
 
+/**
+ * Local Route
+ */
+
+Route::post('redirect'				, 'GeneralTestController@redirect');
+Route::get('risk'				, 'Crm\RiskController@index');
+Route::get('localtest'			, 'LocalTestController@index');
+Route::get('document'			, 'LocalTestController@generate_api_doc');
+Route::get('test'				, 'GeneralTestController@test');
+Route::get('generate'			, 'GeneralTestController@generate');
+Route::post( 'get_create_code'	, 'GeneralTestController@getCode' ); // 注册--获取验证码
+
+
+/**
+ * Load Local Tools
+ */
 $loadFile = [
 		'GZBTool.php',
 		'Unit.php'
 ];
-
 function loadFunc(array $files,$basePath = ''){
 	$basePath = $basePath ? $basePath : __DIR__;
 	$basePath = rtrim($basePath,'/').'/';
@@ -18,6 +33,25 @@ function loadFunc(array $files,$basePath = ''){
 	}
 }
 loadFunc($loadFile);
+
+
+
+function getSqls(){
+	
+	$sql = \DB::getQueryLog ();
+	$_SQL = [];
+	foreach ($sql as $k=>$v){
+		if(!isset($_SQL [$v['query']])){
+			$_SQL [$v['query']] = 1;
+		}else{
+			$_SQL [$v['query']] ++;
+		}
+	}
+	
+	edump($_SQL);
+	
+}
+
 
 if(!function_exists('invokeMethod')){
 	function getInvokeMethodArray($class,$method){

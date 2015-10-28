@@ -312,6 +312,7 @@
 		            $('#res').html(dt);
 	            },
             	error:function(){
+            		console.log(data);
 					alert('ERROR');
                 }
 	         });

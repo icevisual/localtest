@@ -2,19 +2,11 @@
 Route::get ( '/', function () {
 	return 'api.gzb.root';
 } );
-	if( class_exists('LocaltestController')){
-		include __DIR__.'/helper.php';
-		Route::post('redirect'				, 'GeneralTestController@redirect');
-		Route::post('server'				, 'GeneralTestController@server');
-		Route::get('risk'				, 'Crm\RiskController@index');
-		Route::get('localtest'			, 'LocalTestController@index');
-		Route::get('document'			, 'LocalTestController@generate_api_doc');
-		Route::get('test'				, 'GeneralTestController@test');
-		Route::get('generate'			, 'GeneralTestController@generate');
-		Route::post( 'get_create_code'	, 'GeneralTestController@getCode' ); // 注册--获取验证码
-	}
-include __DIR__.'/routesV2.php';
-	
+
+if(\App::environment('local') 
+		&& class_exists('LocaltestController')){
+	include __DIR__.'/helper.php';
+}
 /**
  * V1.0
  * 
@@ -26,6 +18,19 @@ Route::options ( '{all}', function () {
 	$response->header ( 'Access-Control-Allow-Headers', 'X-Requested-With, Origin, X-Csrftoken, Content-Type, Accept' );
 	return $response;
 } )->where ( 'all', '.*' );
+
+// activity相关
+Route::group ( array (
+		'prefix' => 'activity'
+), function () {
+	//获取用户信息
+	Route::post ( '/credit_info'		, array('before'=>'uid_token','uses'=>'Activity\ActivityController@credit_info' ) );
+	//创建、更新用户信息
+	Route::post ( '/create_userinfo'	, array('before'=>'uid_token','uses'=>'Activity\ActivityController@create_userinfo' ) );
+	//生成信用支付订单
+	Route::post ( '/create_order'	, array('before'=>'uid_token','uses'=>'Activity\ActivityController@create_order' )  );
+} );
+include __DIR__.'/routesV2.php';
 // Redpacket相关
 Route::group ( array (
 		'prefix' => 'weixin'
@@ -79,6 +84,8 @@ Route::group ( array (
 		'before' => 'crm_auth',
 		'prefix' => 'crm' 
 ), function () {
+	
+	Route::post ( '/updateUserInfo', 'Crm\UserController@updateUserInfo' );
 	Route::any ( 'sms', 'Crm\SmsController@index' );
 	Route::post ( '/financial/repayment', 'Crm\FinancialController@repayment' ); // 还款信息
 	Route::post ( '/financial/receivable', 'Crm\FinancialController@receivable' ); // 应收账款
@@ -86,6 +93,7 @@ Route::group ( array (
 	Route::post('/financial/withholding', 'Crm\FinancialController@withholding'); //代扣管理
 	Route::post('/financial/withholding_binding', 'Crm\FinancialController@withholding_binding'); //代扣管理
 	Route::post ( '/financial/rescindContract', 'User\UserController@rescindContract' ); // 取消代扣银行卡
+	Route::any ( '/fourFactorsAndBlackCheck', 'Lend\LendController@fourFactorsAndBlackCheck' ); // 同盾&四要素查询
 	
 } );
 
@@ -150,7 +158,7 @@ Route::group ( array (
 	Route::any ( '/uPay_Notify', 'Order\OrderController@uPay_Notify' ); // 一键支付，接收异步请求
 	Route::post ( '/tranDirectReq', 'Order\OrderController@tranDirectReq' ); // U付,直连支付
 	Route::get ( '/task_payment', 'Order\OrderController@task_payment' ); // 支付宝异步测试接口
-	Route::post ( '/locat', 'Order\OrderController@locat' ); // 支付宝异步测试接口
+	Route::any ( '/locat', 'Order\OrderController@locat' ); // 支付宝异步测试接口
 } );
 
 // lend相关
@@ -158,8 +166,18 @@ Route::group ( array (
 		'prefix' => 'lend' 
 ), function () {
 	
+	
+	Route::post ( '/user_error_report', 'Lend\LendController@user_error_report' ); // 用户使用的设备上报
+	
+	Route::post ( '/user_device_report', 'Lend\LendController@user_device_report' ); // 用户使用的设备上报
+	
 	Route::get ( '/get_banner', 'Lend\LendController@get_banner' ); // 获取banner
 	Route::get ( '/get_support_bank', 'Lend\LendController@get_support_bank' ); // 获取支持的银行列表
+	Route::post ( '/fraudmetrixBlacklist', array(
+			'before'=>'crm_auth',
+			'uses'=>'Lend\LendController@fraudmetrixBlacklist' 
+	)); // 同盾&四要素查询
+	
 	Route::any ( '/fourFactorsAndBlackCheck', 'Lend\LendController@fourFactorsAndBlackCheck' ); // 同盾&四要素查询
 	Route::any ( '/doFraudmetrix', 'Lend\LendController@doFraudmetrix' ); // 同盾查询
 	Route::any ( '/get_bank', 'Lend\LendController@get_bank' ); // 根据银行卡号获取银行信息

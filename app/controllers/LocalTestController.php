@@ -50,7 +50,7 @@ class LocalTestController extends \BaseController
 		if(!is_array($codes) ) return false;
 		array_walk($codes, function($v,$k) use (&$params) {
 			//Input::get ( 'uid' );Input::get ( 'service' )
-			$r = preg_match('/Input::get\s*\(\s*[\'\"]([\w\d_]*)[\'\"]\s*(:?,\s*[\'\"]*[\d\w]*[\'\"]*)*\)/', $v,$matchs);
+			$r = preg_match('/Input::get\s*\(\s*[\'\"]([\w\d_]*)[\'\"]\s*(:?,\s*[\'\"]*[ \d\w]*[\'\"]*)*\)/', $v,$matchs);
 			if($r){
 				$params[$matchs[1]] = true;
 			}
@@ -83,7 +83,8 @@ class LocalTestController extends \BaseController
 // 		$code = getFunctionDeclaration($filterClosure[0]);
 		$filters = array(
 			'redpacket_switch' 	=> 'Redpacket\RedpacketController@get_redpacket_status',
-			'uid_token' 		=> 'Redpacket\RedpacketController@verifyUserToken'
+			'uid_token' 		=> 'Redpacket\RedpacketController@verifyUserToken',
+				'crm_auth'=> 'Lend\LendController@crm_auth',
 		);
 		if(!isset($filters[$filter])) return false;
 		$action = $this->compileAction($filters[$filter]);

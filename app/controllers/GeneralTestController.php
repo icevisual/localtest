@@ -198,7 +198,343 @@ class GeneralTestController extends \BaseController {
 	}
 	
 	
+	public function getResource(){
+		
+		static  $_data = [];
+		
+		if(empty($_data)){
+			$data = \DB::select('select * From __tmp_s ');
+			foreach ($data as $k => $v){
+				$_data [] = $v->phone;
+			}
+		}
+		return $_data;
+	}
+	
+	public function process(){
+		
+		$phone =[
+				'18767135775',
+				'18767135888',
+				'18767135799',
+		];
+		$phone = $this->getResource();
+		$len = count($phone);
+		
+		$user_data = [
+				'phone' 	=> $phone[mt_rand(0,$len - 1)],
+				'password' 	=> '123456',
+		];
+		$base = 'http://localhost:89';
+		$res = curl_post($base.'/v2.0/user/login', $user_data);
+		
+		$uid 	= $res['data']['account']['uid'];
+		$token 	= $res['data']['token'];
+		
+		$order_data= [
+				'uid'		=> $uid,
+				'token' 	=> $token,
+				'credit'	=> 5000,
+				'periods'	=> 6,
+				'span'		=> 30,
+		];
+		
+		$res = curl_post($base.'/v2.0/order/put_credit', $order_data);
+		
+		if($res['status'] != 200){
+			$order_data['status'] = '[0,1,2]';
+			$res = curl_post($base.'/v2.0/order/get_orderlist', $order_data);
+			if(empty($res['data'])){
+				\CommonTool::log('STOP', 'Data Empty');
+				return false;
+			}
+			
+			$orderid = $res['data'][0]['orderid'];
+		}else{
+			$orderid =  $res['data']['orderid'] ;
+		}
+		
+		$order = \Order\Main::where('orderid',$orderid)->first();
+		if($order['status'] == 0){
+			//待审核
+			$info_data = array(
+					"orderid" 	=> $orderid,
+					"uid" 		=> $uid,
+					"status" 	=> 1,
+					"info" 		=> '[SYSTEM AUTO]',
+					"reason" 	=> '',
+					"option" 	=> 'checkList',
+					"created_at" => date("Y-m-d H:i:s", time()),
+					"updated_at" => date("Y-m-d H:i:s", time())
+			);
+			
+			
+			$Task = \Order\Task::where('orderid',$orderid)->first();
+			if($Task){
+				$task_id = $Task['id'];
+			}else{
+				$insertSql =  createInsertSql('gzb_order_task', $info_data);
+				\DB::insert($insertSql);
+				$task_id = lastInsertId();
+			}
+			
+			$updateData = array(
+					"order_task_id" => $task_id,
+					'status' => 1,
+			);
+			
+			\Order\Main::where('orderid',$orderid)->update($updateData);
+		}
+		
+		$order = \Order\Main::where('orderid',$orderid)->first();
+		if($order['status'] == 1){
+			$res = curl_post($base.'/v2.0/order/task_order', ["orderid" => $orderid,'freeint'=>0]);
+			if($res['status'] == 200){
+				$ver ['status'] = '2';
+				$ver ['pay_at'] = date('Y-m-d H:i:s', time());
+				\Order\Main::where('orderid',$orderid)->update($ver);
+			}
+		}
+		
+		$order = \Order\Main::where('orderid',$orderid)->first();
+		if($order['status'] == 2){
+			//还款
+			$sendData = [
+					'uid' => $uid,
+					'orderid' => $orderid,
+					'type' => 1,
+					'pay_at' => date('Y-m-d H:i:s'),
+					'difference' => 0,
+			];
+			$res = curl_post($base.'/v2.0/order/repayment_hend', $sendData);
+		}
+		return true;
+	}
+	
 	public function test() {
+		
+		function GetIP(){
+			if(!empty($_SERVER["HTTP_CLIENT_IP"]))
+				$cip = $_SERVER["HTTP_CLIENT_IP"];
+			else if(!empty($_SERVER["HTTP_X_FORWARDED_FOR"]))
+				$cip = $_SERVER["HTTP_X_FORWARDED_FOR"];
+			else if(!empty($_SERVER["REMOTE_ADDR"]))
+				$cip = $_SERVER["REMOTE_ADDR"];
+			else
+				$cip = "无法获取！";
+			return $cip;
+		}
+		echo "<br>访问IP: ".GetIP()."<br>";
+		echo "<br>访问来路: ".$_SERVER["HTTP_REFERER"];
+		
+		
+		exit;
+		
+		
+		$url = "http://wap.cmread.com/sso/oauth2/login?e_l=2&f=44012&pg=";
+		$fields = array(
+				'uname'=>'meiye1988',
+				'passwd'=>'123123',
+				'rememberUname'=>'on',
+				'login'=>'登入'
+		);
+		
+		$client = new HTTPClient();
+		$html = $client->get('http://wap.cmread.com/sso/auth?e_p=1&response_type=token&e_l=2&redirect_uri=http%3A%2F%2Fwap.cmread.com%2Fr%2Ff%2Fslr&layout=2&state=succurl%253D%252Fr%252Fp%252Findex.jsp%253Ff%253D3862%2526pg%253D11%2526layout%253D2%2526vt%253D2%26faildurl%253D%252Fr%252Fp%252Findex.jsp%253Ff%253D3862%2526pg%253D11%2526layout%253D2%2526vt%253D2&fr=113&client_id=cmread-wap&e_f=0&e_c=0000&e_s=0');
+		echo $html, PHP_EOL;
+		$html = $client->post($url, $fields);
+		echo $html, PHP_EOL;
+		
+		
+		exit;
+		
+		phpinfo();
+		
+		exit;
+		$InfoProcessor = new \Lib\Fun\InfoProcessor();
+		$result =  $InfoProcessor->process('fraudmetrix', [
+					'name'		=> '陈夏',
+					'phone' 	=> '18767109019',
+					'identity' 	=> '3303271992010966107',
+			]);		
+		edump($result);
+		
+		edump(['电风扇'=>'asd']);
+		edump(strtotime('Y-m-d H:i:s',time()));
+		$value = [
+				'ad' => 'dd'
+				
+		];
+		$data = serialize($value);
+		dump($data);
+		edump(unserialize($data));
+		
+		
+// 		dump(\DB::select('desc gzb_order_suborder'));
+		\DB::beginTransaction();
+		$res = \User\LoginType::where('id','<',10)->delete();
+		dump($res);
+		exit;
+		\DB::commit();
+		
+		$AESTool = new AESTool();
+		
+		$AESTool->setSecretKey('icevisual');
+		
+		
+		
+		$filename = '0824.txt';
+		$content = file_get_contents($filename);
+		$content = iconv('GBK', 'UTF-8', $content);
+		$contents = $AESTool->encrypt($content);
+		
+		$store = '0824sql.txt';
+		
+		file_put_contents($store, $contents);
+		
+		
+		$contentss = file_get_contents($store);
+		
+		$content = iconv('UTF-8', 'GBK', $contentss);
+		
+		$content = $AESTool->decrypt($content);
+		
+		echo($content);
+		exit;
+		
+		
+		exit();
+		
+		dump(\DB::select('call select_info("phone","18767135888")'));
+		
+		dump(\App::environment());
+		edump(time());
+		
+		
+		
+		
+		ignore_user_abort(true); // 后台运行
+		set_time_limit(0);
+		ob_end_clean();
+		header("Connection: close");
+		header("HTTP/1.1 200 OK");
+		ob_start();#开始当前代码缓冲
+		echo "running.....";
+		//下面输出http的一些头信息
+		$size=ob_get_length();
+		header("Content-Length: $size");
+		ob_end_flush();#输出当前缓冲
+		flush();#输出PHP缓冲
+		$restart = 0;
+		for($i = 0 ; $i < 100 ; $i ++){
+			if($restart > 4){
+				\CommonTool::log('RESTART', 'RESTART TOO OFFTEN',true);
+				exit;
+			}
+			
+			\CommonTool::log('START', $i);
+			$res = $this->process();
+			\CommonTool::log('END', $i);
+			
+			if($res === false){
+				$restart ++ ;
+				$ret = system('D:\wnmp\nginx\restert.bat',$return_var);
+				\CommonTool::log('RESTART', $restart,true);
+				sleep(1 * $restart);
+			}else{
+				$restart = 0;
+			}
+			sleep(0.1);
+		}
+		//D:\wnmp\nginx\restert.bat
+		exit;
+		
+		
+		$uid = 165646;
+		$messag = '姓名、身份证、银行卡与手机号码不匹配';
+		\User\InfoRefund::saveOrUpdate($uid, [
+				'name' 		=> 	$messag,
+				'identity' 	=> 	$messag,
+				'card' 		=>	$messag,
+		]);
+		
+		exit;
+		
+		$str =<<<EOL
+  `uid` int(11) unsigned NOT NULL COMMENT '账户ID',
+  `user_type` tinyint(2) DEFAULT '0' COMMENT '用户身份，0普通用户，1蓝衣天使,2离职蓝色天使',
+  `blue_area` varchar(30) DEFAULT NULL COMMENT '作为蓝色天使时的所属区域',
+  `beblue_at` timestamp NULL DEFAULT NULL COMMENT '成为蓝色天使的时间',
+  `phone` varchar(11) DEFAULT NULL COMMENT '注册手机号码',
+  `name` varchar(50) DEFAULT NULL COMMENT '真实姓名',
+  `identity` varchar(20) DEFAULT NULL COMMENT '身份证',
+  `type` varchar(11) DEFAULT NULL COMMENT '提现账号银行卡类别。',
+  `card` varchar(40) DEFAULT NULL COMMENT '打款账户',
+  `payname` varchar(40) DEFAULT '' COMMENT '打款银行名称',
+  `status` tinyint(2) NOT NULL DEFAULT '0' COMMENT '信息是否可用 0：未验证，1：可用，2：不可用',
+  `credit_status` tinyint(2) DEFAULT NULL COMMENT '账户信用状态 0 无记录，1，信誉良好，2 有过逾期 ，3 黑名单 4，同盾可疑账户 5，三要素不一致',
+EOL;
+		
+		preg_match_all('/`([\w_]*)`/', $str,$matchs);
+		
+		foreach ($matchs[1] as $k => $v){
+			echo  'DECLARE _'.$v.' VARCHAR(50);<br/>';
+		}
+		
+		$sc = '';
+		$_sc = '';
+		$__sc = '';
+		foreach ($matchs[1] as $k => $v){
+			$sc .= '`'.$v.'`,';
+			$_sc .= '_'.$v.',';
+			$__sc .= '_'.$v.','."\n";
+		}
+		$sc = substr($sc, 0,strlen($sc) - 1);
+		$_sc = substr($_sc, 0,strlen($_sc) - 1);
+		$__sc = substr($__sc, 0,strlen($__sc) - 2);
+		echo($sc.' INTO '.$_sc.'<br/>');
+		echo $__sc;
+		exit;
+		edump($str);
+		
+		
+		
+		edump(100/3);
+		$ds = PointsV2::data_source();
+		//[33.41,1.11,98.89,[100.00]];
+		foreach ($ds as $k1 => $v1){
+			foreach ($v1 as $k2 => $v2){
+				foreach ($v2 as $k3 => $v3){
+					echo "\$data[$k1][$k2][$k3]\t= ";
+// 					$v3[3] = $k1;// + $v3[1] ;
+					// 					$v3[2] = $k1  ;
+					$v3[4] = Fun::divide_equally($v3[3],$k2); ;
+					echoArray($v3);
+					echo ';<br/>';
+				}
+			}
+		}
+		
+		
+		edump(Fun::divide_equally(5582.18, 3));
+		
+		dump(0=="a");
+		dump(intval("a"));
+		dump(strval(1));
+		dump($q=0=="a");
+		dump($q);
+		
+		edump(time());
+		edump(Fun::divide_equally(1000, 11));
+		
+		$key = 'gzb_crm_key';
+		$sign = 'gzb_crm_sign';
+		
+		$AESTool = new AESTool();
+		$AESTool->setSecretKey('guozhongbao.com');
+		dump($AESTool->encrypt($key));
+		
+		exit;
 		
 		header('Content-type:text/html;charset=gbk');
 		$res = system('for /f "eol= delims== tokens=1,2 usebackq" %i in (`set`) do @echo %i = %j',$return);
