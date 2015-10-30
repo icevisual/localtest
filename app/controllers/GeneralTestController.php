@@ -313,6 +313,25 @@ class GeneralTestController extends \BaseController {
 	
 	public function test() {
 		
+		$data = [
+				'uid' => '123',
+				'token' => 'sadsad',
+		];
+		ksort($data);
+		$AESTool = new AESTool();
+		$AESTool->setSecretKey('gzb');
+
+		$encrypt = $AESTool->encrypt(json_encode($data));
+		dump($encrypt);
+		
+		$decrypt = $AESTool->decrypt($encrypt);
+		dump(json_decode($decrypt,1));
+		exit;
+		
+		
+		\Lib\Fun\InfoProcessor::autoGeneration();
+		exit;
+		
 		function GetIP(){
 			if(!empty($_SERVER["HTTP_CLIENT_IP"]))
 				$cip = $_SERVER["HTTP_CLIENT_IP"];

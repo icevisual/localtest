@@ -292,9 +292,13 @@ Route::group ( array (
 	Route::group ( array (
 			'prefix' => 'redpacket'
 	), function () {
-		
-// 		Route::get ( '/withdraw_upay_callback', 'V1_3_1\Redpacket\RedpacketController@withdraw_upay_callback' );
-// 		Route::get ( '/withdraw_upay_callback_failed', 'V1_3_1\Redpacket\RedpacketController@withdraw_upay_callback_failed' );
+		if(\App::environment('local') || 
+				\App::environment('development') || 
+				\App::environment('stage')
+				){
+			Route::get ( '/withdraw_upay_callback', 'V1_3_1\Redpacket\RedpacketController@withdraw_upay_callback' );
+// 			Route::get ( '/withdraw_upay_callback_failed', 'V1_3_1\Redpacket\RedpacketController@withdraw_upay_callback_failed' );
+		}
 		
 		//获取红包配置信息
 		Route::get ( '/get_redpacket_config', 'V1_3_1\Redpacket\RedpacketController@get_redpacket_config' );
