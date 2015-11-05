@@ -17,6 +17,102 @@ use Intervention\Image\Facades\Image;
 use Ser\Sms\SmsService;
 use Lib\Fun\Calculation;
 class GeneralTestController extends \BaseController {
+	
+	
+
+	function af($name,$sex){
+		edump(get_defined_vars());
+	}
+	
+	
+	public function  a_new_function(){
+		edump(\Config::get('shield.test_uid'));
+		
+		dump(\Ser\Lend\P2pService::get_bank('6222620140009262906'));
+		
+		
+		exit;
+		$registerApi = 'http://localhost:86/v1.3.1/redpacket/is_user_registered';
+		edump(\Lib\Fun\Post::get($registerApi, ['phone' => '18767135775']));
+		
+		
+		$registerApi = \Config::get('p2p.cgi').\Config::get('p2p.is_registered');
+		$client = new \GuzzleHttp\Client();
+		
+		$request = $client->createRequest('GET', $registerApi, [
+				'query' => ['phone' => '18767135775']
+		]);
+		
+		$response = $client->send($request);
+		$html = $response->getBody();
+		
+		dump($response->getBody()->getContents());
+		exit;
+		
+		
+		$res = curl_get('http://test.h5.guozhongbao.com/api/userinfo.html?uid=12&token=sadas');
+		edump($res);
+		
+		exit;
+		$infPrs = new  \Lib\Fun\InfoProcessor();
+		$dta = [
+				'name' => 'ad',
+				'phone' => '12122112',
+				'identity' => 'asdad',
+				'card' => '123123131',
+		];
+		$res = $infPrs->data($data)->stopWhenFailed($infPrs::INTERNALBLACKLIST)
+		->stopWhenFailed($infPrs::FACTORSCHECK)
+		->then($infPrs::FACTORSCHECK)->prs();
+		
+		exit;
+		$api = 'https://api.eagleeyetech.cn/v1/black/search';
+		
+		$data = [
+				'user_app_key' => '326fc4fde748bbf382a876f0b14b637e769d74c6',
+				'user_app_sn' => '5abc1d734990b6955eeb5bc119611af2',
+				'eid' 	=> '110101200608017796',
+				'uname' => '张晶',
+				'phone' => '18766933806',
+		];
+		
+		$res = curl_post($api, $data);
+		$res = json_decode($res,1);
+		dump($res);
+		
+		exit;
+		
+		ini_set('memory_limit', '2024M');
+//         set_time_limit(1000);
+// 		edump(Config::get ( 'user.data_img_dir' ) );
+		\DB::beginTransaction();
+// 		$user =  new  \User\Info();
+// 		$user =  \User\Info::where('uid',10)->first();
+// 		edump($user['where']);
+// 		$user->at
+		$user = \User\Info::find(10);
+		$user->name = 'asdasda';
+		$ees = $user->update();
+		dumpLastSql();
+		edump($ees);
+		\App::environment();
+		
+		
+		
+		//setcookie('aname1', 'avalue', time() + 60 ,'/','www.ex.com') ;
+		
+		//dump($_COOKIE);
+		
+		
+// 		\Lib\Fun\CFG::autoAdjustment();
+// // 		dump(\Lib\Fun\CFG::CfgAutoRejectionRules('[rules]'));
+// 		dump(\Lib\Fun\CFG::CfgAutoRejectionRules('open_area'));
+		exit;
+	}
+	
+	
+	
+	
 	public function returnDate() {
 		exit ( json_encode ( [ 
 				'data' => 'ok' 
@@ -313,6 +409,12 @@ class GeneralTestController extends \BaseController {
 	
 	public function test() {
 		
+		
+		$this->a_new_function();
+		
+		
+		
+		edump(getprotobyname('tcp'));
 		$data = [
 				'uid' => '123',
 				'token' => 'sadsad',

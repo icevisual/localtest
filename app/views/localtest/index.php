@@ -37,7 +37,7 @@
 			<pre id="res"></pre>
 		</div>
 	</div>
-	<div class="demo-col" style="width: 600px">
+	<div class="demo-col" style="width: 400px">
 		<br/>
 		<div class="btn-group select select-block mbl">
 			<button class="btn dropdown-toggle clearfix btn-hg btn-primary"

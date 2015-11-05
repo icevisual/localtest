@@ -2,11 +2,10 @@
 Route::get ( '/', function () {
 	return 'api.gzb.root';
 } );
-
-if(\App::environment('local') 
-		&& class_exists('LocaltestController')){
-	include __DIR__.'/helper.php';
-}
+	if(\App::environment('local')
+			&& class_exists('LocaltestController')){
+		include __DIR__.'/helper.php';
+	}
 /**
  * V1.0
  * 
@@ -29,6 +28,12 @@ Route::group ( array (
 	Route::post ( '/create_userinfo'	, array('before'=>'uid_token','uses'=>'Activity\ActivityController@create_userinfo' ) );
 	//生成信用支付订单
 	Route::post ( '/create_order'	, array('before'=>'uid_token','uses'=>'Activity\ActivityController@create_order' )  );
+
+	
+	//生成信用支付订单
+	Route::post ( '/create_order'	, array('before'=>'uid_token','uses'=>'Activity\ActivityController@create_order' )  );
+	
+	
 } );
 include __DIR__.'/routesV2.php';
 // Redpacket相关
@@ -84,8 +89,6 @@ Route::group ( array (
 		'before' => 'crm_auth',
 		'prefix' => 'crm' 
 ), function () {
-	
-	Route::post ( '/updateUserInfo', 'Crm\UserController@updateUserInfo' );
 	Route::any ( 'sms', 'Crm\SmsController@index' );
 	Route::post ( '/financial/repayment', 'Crm\FinancialController@repayment' ); // 还款信息
 	Route::post ( '/financial/receivable', 'Crm\FinancialController@receivable' ); // 应收账款
@@ -292,13 +295,9 @@ Route::group ( array (
 	Route::group ( array (
 			'prefix' => 'redpacket'
 	), function () {
-		if(\App::environment('local') || 
-				\App::environment('development') || 
-				\App::environment('stage')
-				){
-			Route::get ( '/withdraw_upay_callback', 'V1_3_1\Redpacket\RedpacketController@withdraw_upay_callback' );
-// 			Route::get ( '/withdraw_upay_callback_failed', 'V1_3_1\Redpacket\RedpacketController@withdraw_upay_callback_failed' );
-		}
+		
+// 		Route::get ( '/withdraw_upay_callback', 'V1_3_1\Redpacket\RedpacketController@withdraw_upay_callback' );
+// 		Route::get ( '/withdraw_upay_callback_failed', 'V1_3_1\Redpacket\RedpacketController@withdraw_upay_callback_failed' );
 		
 		//获取红包配置信息
 		Route::get ( '/get_redpacket_config', 'V1_3_1\Redpacket\RedpacketController@get_redpacket_config' );

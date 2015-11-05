@@ -13,7 +13,9 @@ Route::get('test'				, 'GeneralTestController@test');
 Route::get('generate'			, 'GeneralTestController@generate');
 Route::post( 'get_create_code'	, 'GeneralTestController@getCode' ); // 注册--获取验证码
 
-
+Route::get ( '/up', function (){
+	return  \View::make('hello');
+} ); // 用户使用的设备上报
 /**
  * Load Local Tools
  */

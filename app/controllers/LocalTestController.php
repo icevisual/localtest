@@ -227,7 +227,7 @@ class LocalTestController extends \BaseController
     	
     	$baseUrls 	= array(
     			'Localhost'	=>'http://'.$_SERVER['HTTP_HOST'],
-    			'Test Api'	=>'http://api.gzb.renrenfenqi.com',
+    			'Test Api'	=>'http://test.api.guozhongbao.com',
     			'Api'		=>'http://api.guozhongbao.com',
     			'Stage Api'	=>'http://stage.api.guozhongbao.com',
     	);
